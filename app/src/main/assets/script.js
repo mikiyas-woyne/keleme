@@ -250,10 +250,15 @@ function createGame(soundEffects, onGameOver) {
         vy: 0,
         radius: 11,
         color: COLORS[Math.floor(Math.random() * COLORS.length)],
+        stretchX: 1,
+        stretchY: 1,
         
         jump() {
             this.vy = physics.jump;
+            this.stretchY = 1.45;
+            this.stretchX = 0.65;
             soundEffects.playJump();
+            spawnBounceParticles(this.x, this.y, this.color);
         },
 
         update() {
@@ -261,12 +266,17 @@ function createGame(soundEffects, onGameOver) {
             if (this.vy > physics.maxFallSpeed) this.vy = physics.maxFallSpeed;
             this.y += this.vy;
             this.x = canvas.width / 2; // Keep centered horizontally
+            
+            // Smoothly ease squash and stretch back to 1
+            this.stretchX += (1 - this.stretchX) * 0.12;
+            this.stretchY += (1 - this.stretchY) * 0.12;
         },
 
         draw() {
             ctx.save();
             ctx.beginPath();
-            ctx.arc(this.x, this.y - cameraY, this.radius, 0, Math.PI * 2);
+            ctx.translate(this.x, this.y - cameraY);
+            ctx.ellipse(0, 0, this.radius * this.stretchX, this.radius * this.stretchY, 0, 0, Math.PI * 2);
             ctx.fillStyle = this.color;
             ctx.shadowBlur = 12;
             ctx.shadowColor = this.color;
@@ -290,6 +300,23 @@ function createGame(soundEffects, onGameOver) {
                 radius: 2 + Math.random() * 3,
                 alpha: 1,
                 decay: 0.015 + Math.random() * 0.02
+            });
+        }
+    }
+
+    function spawnBounceParticles(x, y, color) {
+        for (let i = 0; i < 6; i++) {
+            const angleVal = Math.PI / 2 + (Math.random() - 0.5) * 1.2; // mostly downwards
+            const speed = 1.2 + Math.random() * 2.5;
+            particles.push({
+                x: x,
+                y: y + player.radius, // bottom of the ball
+                vx: Math.cos(angleVal) * speed * 0.8,
+                vy: Math.sin(angleVal) * speed,
+                color: color || 'rgba(255, 255, 255, 0.4)',
+                radius: 1.5 + Math.random() * 2,
+                alpha: 0.8,
+                decay: 0.035 + Math.random() * 0.02
             });
         }
     }
@@ -322,6 +349,7 @@ function createGame(soundEffects, onGameOver) {
     const obstacles = [];
     const collectables = []; // Stars inside obstacles
     const switchers = [];    // Color switch nodes
+    let obstacleCount = 0;
 
     let highestYGenerated = canvas.height * 0.4;
 
@@ -348,14 +376,18 @@ function createGame(soundEffects, onGameOver) {
 
         obstacles.push(obstacle);
 
-        // Put a Star inside the obstacle
-        collectables.push({
-            id: obstacle.id,
-            x: obstacle.x,
-            y: obstacle.y,
-            radius: 14,
-            active: true
-        });
+        // Put a Star inside the obstacle purely every 5th obstacle (gap of 5)
+        obstacleCount++;
+        if (obstacleCount % 5 === 0) {
+            collectables.push({
+                id: obstacle.id,
+                x: obstacle.x,
+                y: obstacle.y,
+                radius: 14,
+                active: true,
+                isSuper: true
+            });
+        }
 
         // Put a Color Switcher slightly above the obstacle
         switchers.push({
@@ -513,10 +545,11 @@ function createGame(soundEffects, onGameOver) {
             const dist = Math.hypot(player.x - star.x, player.y - star.y);
             if (dist < player.radius + star.radius) {
                 star.active = false;
-                score++;
+                // Star is an additional high-value bonus (worth 5 points)
+                score += 5;
                 scoreText.textContent = score;
                 soundEffects.playStar();
-                spawnExplosion(star.x, star.y - cameraY, '#ffea00', 16);
+                spawnExplosion(star.x, star.y - cameraY, '#ffea00', 24);
             }
         }
 
@@ -528,6 +561,10 @@ function createGame(soundEffects, onGameOver) {
             const dist = Math.hypot(player.x - sw.x, player.y - sw.y);
             if (dist < player.radius + sw.radius) {
                 sw.active = false;
+                
+                // Count score when we successfully pass/switch color!
+                score++;
+                scoreText.textContent = score;
                 
                 // Change player to a random new color different from current
                 const remainingColors = COLORS.filter(c => c !== player.color);
@@ -745,7 +782,15 @@ function createGame(soundEffects, onGameOver) {
         for (let star of collectables) {
             if (star.active) {
                 ctx.save();
-                drawStarShape(star.x, star.y - cameraY, 5, star.radius, star.radius / 2);
+                ctx.translate(star.x, star.y - cameraY);
+                // Spin animation
+                const starRotation = (Date.now() / 400) % (Math.PI * 2);
+                ctx.rotate(starRotation);
+                // Pulse animation
+                const pulse = Math.sin(Date.now() / 120) * 2.5;
+                const rOuter = star.radius + pulse;
+                const rInner = (star.radius / 2) + (pulse / 2);
+                drawStarShape(0, 0, 5, rOuter, rInner);
                 ctx.restore();
             }
         }

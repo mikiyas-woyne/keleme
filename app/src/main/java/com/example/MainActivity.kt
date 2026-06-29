@@ -37,12 +37,7 @@ class MainActivity : ComponentActivity() {
 fun GameWebView(modifier: Modifier = Modifier) {
   AndroidView(
     factory = { context ->
-      val webViewContext = if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.R) {
-        context.createAttributionContext("game_attribution")
-      } else {
-        context
-      }
-      WebView(webViewContext).apply {
+      WebView(context).apply {
         layoutParams = ViewGroup.LayoutParams(
           ViewGroup.LayoutParams.MATCH_PARENT,
           ViewGroup.LayoutParams.MATCH_PARENT
