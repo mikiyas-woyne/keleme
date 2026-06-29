@@ -110,6 +110,172 @@ class SoundEffects {
 }
 
 // ----------------------------------------------------------------------------
+// Challenges and Level Metadata Definitions
+// ----------------------------------------------------------------------------
+const LEVELS = [
+    {
+        id: 1,
+        name: "Circle Orbit",
+        description: "Reach 5 points with steady circular orbits.",
+        targetScore: 5,
+        types: ['circle'],
+        speedMultiplier: 0.75
+    },
+    {
+        id: 2,
+        name: "Square Box",
+        description: "Reach 8 points with angular squares.",
+        targetScore: 8,
+        types: ['square'],
+        speedMultiplier: 0.85
+    },
+    {
+        id: 3,
+        name: "Simple Rhythm",
+        description: "Reach 10 points. Mixed circles and squares.",
+        targetScore: 10,
+        types: ['circle', 'square'],
+        speedMultiplier: 0.95
+    },
+    {
+        id: 4,
+        name: "Rapid Orbit",
+        description: "Reach 12 points with high-speed circles.",
+        targetScore: 12,
+        types: ['circle'],
+        speedMultiplier: 1.15
+    },
+    {
+        id: 5,
+        name: "Sharp Angles",
+        description: "Reach 14 points dodging fast boxes.",
+        targetScore: 14,
+        types: ['square'],
+        speedMultiplier: 1.2
+    },
+    {
+        id: 6,
+        name: "Mixed Steps",
+        description: "Reach 16 points with alternating geometry.",
+        targetScore: 16,
+        types: ['circle', 'square'],
+        speedMultiplier: 1.25
+    },
+    {
+        id: 7,
+        name: "Focus Velocity",
+        description: "Reach 18 points. Velocity is picking up.",
+        targetScore: 18,
+        types: ['circle', 'square'],
+        speedMultiplier: 1.35
+    },
+    {
+        id: 8,
+        name: "Sphere Specialist",
+        description: "Reach 20 points in a high-speed circle vortex.",
+        targetScore: 20,
+        types: ['circle'],
+        speedMultiplier: 1.4
+    },
+    {
+        id: 9,
+        name: "Block Master",
+        description: "Reach 22 points dodging rapid square barriers.",
+        targetScore: 22,
+        types: ['square'],
+        speedMultiplier: 1.45
+    },
+    {
+        id: 10,
+        name: "Peak Performance",
+        description: "Reach 25 points. Halfway to legend!",
+        targetScore: 25,
+        types: ['circle', 'square'],
+        speedMultiplier: 1.5
+    },
+    {
+        id: 11,
+        name: "Gravity Rush",
+        description: "Reach 28 points. Keep your momentum steady.",
+        targetScore: 28,
+        types: ['circle', 'square'],
+        speedMultiplier: 1.6
+    },
+    {
+        id: 12,
+        name: "Velocity Vault",
+        description: "Reach 30 points on faster gears.",
+        targetScore: 30,
+        types: ['circle', 'square'],
+        speedMultiplier: 1.65
+    },
+    {
+        id: 13,
+        name: "Precision Path",
+        description: "Reach 32 points. Zero room for error.",
+        targetScore: 32,
+        types: ['circle', 'square'],
+        speedMultiplier: 1.7
+    },
+    {
+        id: 14,
+        name: "Hyper Speed",
+        description: "Reach 35 points in super-charged circle rings.",
+        targetScore: 35,
+        types: ['circle'],
+        speedMultiplier: 1.8
+    },
+    {
+        id: 15,
+        name: "Square Cyclone",
+        description: "Reach 35 points in lightning-fast boxes.",
+        targetScore: 35,
+        types: ['square'],
+        speedMultiplier: 1.85
+    },
+    {
+        id: 16,
+        name: "Dynamic Shift",
+        description: "Reach 40 points with chaotic color matching.",
+        targetScore: 40,
+        types: ['circle', 'square'],
+        speedMultiplier: 1.9
+    },
+    {
+        id: 17,
+        name: "Color Storm",
+        description: "Reach 45 points in a swirling rainbow.",
+        targetScore: 45,
+        types: ['circle', 'square'],
+        speedMultiplier: 1.95
+    },
+    {
+        id: 18,
+        name: "Neon Overdrive",
+        description: "Reach 50 points. Absolute speed extreme.",
+        targetScore: 50,
+        types: ['circle', 'square'],
+        speedMultiplier: 2.0
+    },
+    {
+        id: 19,
+        name: "Prism Champion",
+        description: "Reach 55 points. Almost a god.",
+        targetScore: 55,
+        types: ['circle', 'square'],
+        speedMultiplier: 2.1
+    },
+    {
+        id: 20,
+        name: "Infinite Legend",
+        description: "Reach 60 points to attain eternal color mastery.",
+        targetScore: 60,
+        types: ['circle', 'square'],
+        speedMultiplier: 2.2
+    }
+];
+
+// ----------------------------------------------------------------------------
 // Game State Manager & Transition UI System
 // ----------------------------------------------------------------------------
 const GameStateManager = {
@@ -118,6 +284,7 @@ const GameStateManager = {
     soundEnabled: true,
     soundEffects: null,
     activeGame: null,
+    currentLevel: null, // null means Free Play / Unlimited
 
     init() {
         // Load persistency
@@ -142,21 +309,100 @@ const GameStateManager = {
         });
 
         // Controls Bindings
-        document.getElementById('start-btn').addEventListener('click', () => {
+        document.getElementById('free-play-btn').addEventListener('click', () => {
             this.soundEffects.init();
+            this.currentLevel = null;
             this.transitionTo('GAME');
         });
+
+        document.getElementById('levels-btn').addEventListener('click', () => {
+            this.soundEffects.init();
+            this.transitionTo('LEVELS');
+        });
+
+        document.getElementById('levels-back-btn').addEventListener('click', () => {
+            this.transitionTo('MENU');
+        });
+
         document.getElementById('restart-btn').addEventListener('click', () => {
             this.transitionTo('GAME');
         });
+
         document.getElementById('menu-btn').addEventListener('click', () => {
             this.transitionTo('MENU');
+        });
+
+        document.getElementById('next-level-btn').addEventListener('click', () => {
+            if (this.currentLevel) {
+                const nextId = this.currentLevel.id + 1;
+                const nextLevel = LEVELS.find(l => l.id === nextId);
+                if (nextLevel) {
+                    this.currentLevel = nextLevel;
+                    this.transitionTo('GAME');
+                } else {
+                    this.transitionTo('LEVELS');
+                }
+            } else {
+                this.transitionTo('LEVELS');
+            }
+        });
+
+        document.getElementById('victory-menu-btn').addEventListener('click', () => {
+            this.transitionTo('LEVELS');
         });
 
         // Splash Timer -> 2.5 seconds
         setTimeout(() => {
             this.transitionTo('MENU');
         }, 2500);
+    },
+
+    renderLevelsList() {
+        const grid = document.getElementById('levels-list');
+        grid.innerHTML = '';
+        
+        const maxUnlocked = parseInt(localStorage.getItem('keleme_max_unlocked') || '1', 10);
+        
+        LEVELS.forEach(level => {
+            const card = document.createElement('div');
+            card.className = 'level-card';
+            
+            const isCompleted = level.id < maxUnlocked;
+            const isUnlocked = level.id <= maxUnlocked;
+            
+            let badgeClass = 'badge-locked';
+            let badgeText = 'LOCKED';
+            if (isCompleted) {
+                card.classList.add('completed');
+                badgeClass = 'badge-completed';
+                badgeText = 'CLEARED';
+            } else if (isUnlocked) {
+                card.classList.add('unlocked');
+                badgeClass = 'badge-unlocked';
+                badgeText = 'PLAY';
+            } else {
+                card.classList.add('locked');
+            }
+            
+            card.innerHTML = `
+                <div class="level-info">
+                    <span class="level-num">Level ${level.id}</span>
+                    <span class="level-name">${level.name}</span>
+                    <span class="level-desc">${level.description} (Target: ${level.targetScore})</span>
+                </div>
+                <span class="level-badge ${badgeClass}">${badgeText}</span>
+            `;
+            
+            if (isUnlocked) {
+                card.addEventListener('click', () => {
+                    this.soundEffects.init();
+                    this.currentLevel = level;
+                    this.transitionTo('GAME');
+                });
+            }
+            
+            grid.appendChild(card);
+        });
     },
 
     transitionTo(state) {
@@ -179,25 +425,77 @@ const GameStateManager = {
         } else if (state === 'MENU') {
             document.getElementById('menu-highscore').textContent = this.highScore;
             document.getElementById('main-menu').classList.add('active');
+        } else if (state === 'LEVELS') {
+            this.renderLevelsList();
+            document.getElementById('levels-screen').classList.add('active');
         } else if (state === 'GAME') {
             document.getElementById('game-container').classList.add('active');
+            
+            // Configure Level HUD
+            const levelHud = document.getElementById('level-hud');
+            if (this.currentLevel) {
+                document.getElementById('level-hud-name').textContent = `LEVEL ${this.currentLevel.id}: ${this.currentLevel.name.toUpperCase()}`;
+                document.getElementById('level-hud-target').textContent = `TARGET: ${this.currentLevel.targetScore}`;
+                levelHud.style.display = 'flex';
+            } else {
+                levelHud.style.display = 'none';
+            }
+
             // Instantiate the game
-            this.activeGame = createGame(this.soundEffects, (score) => {
+            this.activeGame = createGame(this.soundEffects, this.currentLevel, (score) => {
                 this.onGameOver(score);
+            }, (score) => {
+                this.onLevelVictory(score);
             });
         } else if (state === 'GAMEOVER') {
             document.getElementById('game-over-screen').classList.add('active');
+        } else if (state === 'VICTORY') {
+            document.getElementById('victory-screen').classList.add('active');
         }
     },
 
     onGameOver(score) {
-        if (score > this.highScore) {
-            this.highScore = score;
-            localStorage.setItem('keleme_highscore', this.highScore);
+        if (!this.currentLevel) {
+            // Highscore is only tracked/saved in Free Play mode to keep things clear!
+            if (score > this.highScore) {
+                this.highScore = score;
+                localStorage.setItem('keleme_highscore', this.highScore);
+            }
         }
         document.getElementById('final-score').textContent = score;
         document.getElementById('gameover-highscore').textContent = this.highScore;
         this.transitionTo('GAMEOVER');
+    },
+
+    onLevelVictory(score) {
+        if (this.currentLevel) {
+            const currentId = this.currentLevel.id;
+            const maxUnlocked = parseInt(localStorage.getItem('keleme_max_unlocked') || '1', 10);
+            
+            // Update victory screen details
+            document.getElementById('victory-level-name').textContent = `${this.currentLevel.name.toUpperCase()} COMPLETE`;
+            
+            // Check if there is a next level to display "NEXT LEVEL" or "ALL BEATEN!"
+            const nextLevelId = currentId + 1;
+            const nextLevelExists = LEVELS.some(l => l.id === nextLevelId);
+            const nextBtn = document.getElementById('next-level-btn');
+            const victoryMsg = document.getElementById('victory-message');
+            
+            if (currentId === maxUnlocked) {
+                // Unlock next level!
+                localStorage.setItem('keleme_max_unlocked', (currentId + 1).toString());
+            }
+
+            if (nextLevelExists) {
+                nextBtn.style.display = 'flex';
+                nextBtn.textContent = 'NEXT LEVEL';
+                victoryMsg.textContent = 'NEXT CHALLENGE UNLOCKED';
+            } else {
+                nextBtn.style.display = 'none';
+                victoryMsg.textContent = 'YOU HAVE CONQUERED ALL CHALLENGES!';
+            }
+        }
+        this.transitionTo('VICTORY');
     }
 };
 
@@ -208,7 +506,7 @@ window.addEventListener('load', () => {
 // ----------------------------------------------------------------------------
 // Core Gameplay Module (Strictly Self-Contained)
 // ----------------------------------------------------------------------------
-function createGame(soundEffects, onGameOver) {
+function createGame(soundEffects, currentLevel, onGameOver, onVictory) {
     const canvas = document.getElementById('game-canvas');
     const ctx = canvas.getContext('2d');
     const scoreText = document.getElementById('current-score');
@@ -243,6 +541,9 @@ function createGame(soundEffects, onGameOver) {
     // Camera State
     let cameraY = 0;
 
+    // Ground Line Position (Dynamic starting floor)
+    const groundY = canvas.height * 0.78;
+
     // Player State
     const player = {
         x: canvas.width / 2,
@@ -265,6 +566,17 @@ function createGame(soundEffects, onGameOver) {
             this.vy += physics.gravity;
             if (this.vy > physics.maxFallSpeed) this.vy = physics.maxFallSpeed;
             this.y += this.vy;
+
+            // Bounce off ground line
+            if (this.y + this.radius >= groundY && groundY < cameraY + canvas.height) {
+                this.y = groundY - this.radius;
+                this.vy = physics.jump;
+                this.stretchY = 1.45;
+                this.stretchX = 0.65;
+                soundEffects.playJump();
+                spawnBounceParticles(this.x, this.y, this.color);
+            }
+
             this.x = canvas.width / 2; // Keep centered horizontally
             
             // Smoothly ease squash and stretch back to 1
@@ -359,10 +671,11 @@ function createGame(soundEffects, onGameOver) {
         highestYGenerated = spawnY;
 
         // Pick an obstacle type
-        const types = ['circle', 'cross', 'double_circle', 'square'];
-        const type = types[Math.floor(Math.random() * types.length)];
+        const allowedTypes = currentLevel ? currentLevel.types : ['circle', 'square'];
+        const type = allowedTypes[Math.floor(Math.random() * allowedTypes.length)];
         
-        const baseSpeed = 0.016 + Math.min(score * 0.002, 0.015);
+        const speedMult = currentLevel ? currentLevel.speedMultiplier : 1.0;
+        const baseSpeed = (0.016 + Math.min(score * 0.002, 0.015)) * speedMult;
         const obstacle = {
             id: Date.now() + Math.random(),
             x: canvas.width / 2,
@@ -550,6 +863,12 @@ function createGame(soundEffects, onGameOver) {
                 scoreText.textContent = score;
                 soundEffects.playStar();
                 spawnExplosion(star.x, star.y - cameraY, '#ffea00', 24);
+
+                // Level win check
+                if (currentLevel && score >= currentLevel.targetScore) {
+                    triggerVictory();
+                    return;
+                }
             }
         }
 
@@ -572,6 +891,12 @@ function createGame(soundEffects, onGameOver) {
                 
                 soundEffects.playSwitch();
                 spawnExplosion(sw.x, sw.y - cameraY, player.color, 14);
+
+                // Level win check
+                if (currentLevel && score >= currentLevel.targetScore) {
+                    triggerVictory();
+                    return;
+                }
             }
         }
 
@@ -729,6 +1054,25 @@ function createGame(soundEffects, onGameOver) {
         }, 750);
     }
 
+    function triggerVictory() {
+        if (!isPlaying) return;
+        isPlaying = false;
+        soundEffects.playSwitch();
+        
+        // Spawn sequential beautiful neon explosions of victory!
+        for (let i = 0; i < 3; i++) {
+            setTimeout(() => {
+                spawnExplosion(player.x + (Math.random() - 0.5) * 60, player.y - cameraY + (Math.random() - 0.5) * 60, '#39ff14', 22);
+                spawnExplosion(player.x + (Math.random() - 0.5) * 60, player.y - cameraY + (Math.random() - 0.5) * 60, '#00f0ff', 22);
+            }, i * 200);
+        }
+
+        setTimeout(() => {
+            if (animationId) cancelAnimationFrame(animationId);
+            onVictory(score);
+        }, 900);
+    }
+
     // Core Loop
     function loop() {
         if (!isPlaying) {
@@ -773,6 +1117,20 @@ function createGame(soundEffects, onGameOver) {
         recycleEntities();
 
         // Drawing Phase
+        // Draw Ground Line
+        if (groundY - cameraY < canvas.height + 50) {
+            ctx.save();
+            ctx.beginPath();
+            ctx.moveTo(0, groundY - cameraY);
+            ctx.lineTo(canvas.width, groundY - cameraY);
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.45)';
+            ctx.lineWidth = 5;
+            ctx.shadowBlur = 15;
+            ctx.shadowColor = 'rgba(0, 240, 255, 0.6)';
+            ctx.stroke();
+            ctx.restore();
+        }
+
         // Draw Obstacles
         for (let obs of obstacles) {
             drawObstacle(obs);

@@ -31,7 +31,8 @@
             <p class="game-description">Let's play with colors</p>
             
             <div class="menu-controls">
-                <button id="start-btn" class="btn btn-primary" data-tag="start_button">START GAME</button>
+                <button id="free-play-btn" class="btn btn-primary" data-tag="free_play_button">FREE PLAY</button>
+                <button id="levels-btn" class="btn btn-primary btn-challenges" data-tag="levels_button">CHALLENGES</button>
                 
                 <div class="sound-toggle-container">
                     <span class="toggle-label">SOUND</span>
@@ -45,11 +46,47 @@
         </div>
     </div>
 
+    <!-- Levels Screen -->
+    <div id="levels-screen" class="screen">
+        <div class="menu-content select-content">
+            <h2 class="levels-title">CHALLENGES</h2>
+            <div id="levels-list" class="levels-grid">
+                <!-- Dynamically populated in script.js -->
+            </div>
+            <button id="levels-back-btn" class="btn btn-secondary" data-tag="levels_back_button">BACK TO MENU</button>
+        </div>
+    </div>
+
     <!-- Gameplay Screen -->
     <div id="game-container" class="screen">
         <canvas id="game-canvas"></canvas>
         <div id="score-hud">
-            <div class="score-box">SCORE: <span id="current-score">0</span></div>
+            <div class="score-box">
+                <span class="score-label" style="color: #64748b;">SCORE</span>
+                <span id="current-score">0</span>
+            </div>
+            <div id="level-hud" class="score-box" style="align-items: flex-end; display: none;">
+                <span id="level-hud-name" style="color: #64748b;">LEVEL 1</span>
+                <span id="level-hud-target" style="font-size: 1.3rem; color: var(--neon-yellow); text-shadow: 0 0 8px rgba(255, 234, 0, 0.4); font-weight: 900;">TARGET: 5</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Victory Screen -->
+    <div id="victory-screen" class="screen">
+        <div class="gameover-content">
+            <h2 class="victory-title">LEVEL COMPLETE</h2>
+            
+            <div class="score-display">
+                <p class="score-label" id="victory-level-name">LEVEL 1 COMPLETE</p>
+                <p class="score-value" style="color: var(--neon-green); text-shadow: 0 0 20px var(--neon-green);">VICTORY</p>
+                <p class="highscore-label" id="victory-message">NEXT CHALLENGE UNLOCKED</p>
+            </div>
+            
+            <div class="gameover-controls">
+                <button id="next-level-btn" class="btn btn-primary" data-tag="next_level_button">NEXT LEVEL</button>
+                <button id="victory-menu-btn" class="btn btn-secondary" data-tag="victory_menu_button">CHALLENGES</button>
+            </div>
         </div>
     </div>
 
