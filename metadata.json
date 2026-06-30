@@ -1,6 +1,0 @@
-{
-  "name": "Color Twist",
-  "description": "Let's play with colors",
-  "requestFramePermissions": [],
-  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
-}
