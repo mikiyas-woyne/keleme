@@ -507,7 +507,7 @@ const GameStateManager = {
             const isActive = activeSkin === skin.id;
             
             let badgeClass = 'badge-locked';
-            let badgeText = `${skin.cost} ★`;
+            let badgeText = `${skin.cost} â˜…`;
             
             if (isActive) {
                 card.classList.add('completed');
@@ -584,10 +584,10 @@ const GameStateManager = {
         
         function tick() {
             if (self.currentState !== 'SHOP') return;
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.clearRect(0, 0, window.GAME_WIDTH, window.GAME_HEIGHT);
             
-            const x = canvas.width / 2;
-            const y = canvas.height / 2;
+            const x = window.GAME_WIDTH / 2;
+            const y = window.GAME_HEIGHT / 2;
             const radius = 18;
             const color = '#00f0ff';
             
@@ -596,7 +596,7 @@ const GameStateManager = {
             
             const pulse = 1.0 + 0.08 * Math.sin(Date.now() / 150);
             
-            ctx.shadowBlur = 15;
+            ctx.shadowBlur = (15) * (window.SHADOW_MULT !== undefined ? window.SHADOW_MULT : 1);
             ctx.shadowColor = color;
             ctx.fillStyle = color;
             
@@ -876,8 +876,8 @@ function createGame(soundEffects, currentLevel, onGameOver, onVictory) {
         const count = 35;
         for (let i = 0; i < count; i++) {
             ambientParticles.push({
-                x: Math.random() * canvas.width,
-                y: Math.random() * canvas.height,
+                x: Math.random() * window.GAME_WIDTH,
+                y: Math.random() * window.GAME_HEIGHT,
                 size: Math.random() * 2.5 + 1.0,
                 speedY: Math.random() * 0.35 + 0.12,
                 alpha: Math.random() * 0.45 + 0.15,
@@ -914,7 +914,7 @@ function createGame(soundEffects, currentLevel, onGameOver, onVictory) {
             for (let i = 0; i < 3; i++) {
                 const heart = document.createElement('span');
                 heart.className = 'life-heart';
-                heart.textContent = i < lives ? '❤️' : '🖤';
+                heart.textContent = i < lives ? 'â¤ï¸' : 'ðŸ–¤';
                 livesContainer.appendChild(heart);
             }
         } else {
@@ -961,15 +961,15 @@ function createGame(soundEffects, currentLevel, onGameOver, onVictory) {
             updateLivesHUD();
             
             // Safe Respawn slightly below where the camera currently is, onto a temporary safe platform
-            player.x = canvas.width / 2;
-            player.y = cameraY + canvas.height - 180;
+            player.x = window.GAME_WIDTH / 2;
+            player.y = cameraY + window.GAME_HEIGHT - 180;
             player.vy = -5.0; // gentle initial upward drift
             player.vx = 0;
             player.color = COLORS[Math.floor(Math.random() * COLORS.length)];
             
             // Create a safe, temporary platform directly under the player
             respawnPlatform = {
-                x: canvas.width / 2,
+                x: window.GAME_WIDTH / 2,
                 y: player.y + player.radius + 4,
                 width: 120,
                 height: 8,
@@ -991,12 +991,12 @@ function createGame(soundEffects, currentLevel, onGameOver, onVictory) {
         updateLivesHUD();
         
         // Reset player, camera state
-        player.x = canvas.width / 2;
-        player.y = canvas.height * 0.72;
+        player.x = window.GAME_WIDTH / 2;
+        player.y = window.GAME_HEIGHT * 0.72;
         player.vy = 0;
         player.color = COLORS[Math.floor(Math.random() * COLORS.length)];
         cameraY = 0;
-        highestYGenerated = canvas.height * 0.85;
+        highestYGenerated = window.GAME_HEIGHT * 0.85;
         
         // Rebuild initial layout
         obstacles.length = 0;
@@ -1073,7 +1073,7 @@ function createGame(soundEffects, currentLevel, onGameOver, onVictory) {
             this.y += this.vy;
 
             // Bounce off ground line
-            if (this.y + this.radius >= groundY && groundY < cameraY + canvas.height) {
+            if (this.y + this.radius >= groundY && groundY < cameraY + window.GAME_HEIGHT) {
                 this.y = groundY - this.radius;
                 this.vy = physics.jump;
                 this.stretchY = 1.45;
@@ -1097,14 +1097,14 @@ function createGame(soundEffects, currentLevel, onGameOver, onVictory) {
                     this.x = this.radius;
                     this.vx = -this.vx * 0.5 + 1.2; // Bounce right
                     if (soundEffects.playSwitch) soundEffects.playSwitch();
-                } else if (this.x + this.radius > canvas.width) {
-                    this.x = canvas.width - this.radius;
+                } else if (this.x + this.radius > window.GAME_WIDTH) {
+                    this.x = window.GAME_WIDTH - this.radius;
                     this.vx = -this.vx * 0.5 - 1.2; // Bounce left
                     if (soundEffects.playSwitch) soundEffects.playSwitch();
                 }
             } else {
                 // Ease back to horizontal center if balance mode is off
-                this.x += (canvas.width / 2 - this.x) * 0.1;
+                this.x += (window.GAME_WIDTH / 2 - this.x) * 0.1;
                 this.vx = 0;
             }
             
@@ -1120,7 +1120,7 @@ function createGame(soundEffects, currentLevel, onGameOver, onVictory) {
             ctx.save();
             ctx.translate(this.x, this.y - cameraY);
             
-            ctx.shadowBlur = 12;
+            ctx.shadowBlur = (12) * (window.SHADOW_MULT !== undefined ? window.SHADOW_MULT : 1);
             ctx.shadowColor = this.color;
             ctx.fillStyle = this.color;
             ctx.strokeStyle = this.color;
@@ -1208,19 +1208,29 @@ function createGame(soundEffects, currentLevel, onGameOver, onVictory) {
 
     // Canvas Auto Scaling
     function resizeCanvas() {
-        const oldHeight = canvas.height;
-        const oldWidth = canvas.width;
+        const oldHeight = window.GAME_HEIGHT || 0;
+        const oldWidth = window.GAME_WIDTH || 0;
 
-        canvas.width = window.innerWidth || 360;
-        canvas.height = window.innerHeight || 640;
+        window.GAME_WIDTH = window.innerWidth || 360;
+        window.GAME_HEIGHT = window.innerHeight || 640;
+        
+        const dpr = window.devicePixelRatio || 1;
+        canvas.width = window.GAME_WIDTH * dpr;
+        canvas.height = window.GAME_HEIGHT * dpr;
+        canvas.style.width = window.GAME_WIDTH + "px";
+        canvas.style.height = window.GAME_HEIGHT + "px";
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        
+        const isMobile = window.GAME_WIDTH <= 768 || ('ontouchstart' in window) || navigator.maxTouchPoints > 0;
+        window.SHADOW_MULT = isMobile ? 0 : 1;
 
-        groundY = canvas.height * 0.78;
+        groundY = window.GAME_HEIGHT * 0.78;
 
         // If the size is initialized or updated from 0/small, adjust entities
-        if ((oldHeight <= 0 || oldWidth <= 0) && canvas.height > 0) {
-            player.x = canvas.width / 2;
-            player.y = canvas.height * 0.72;
-            highestYGenerated = canvas.height * 0.85;
+        if ((oldHeight <= 0 || oldWidth <= 0) && window.GAME_HEIGHT > 0) {
+            player.x = window.GAME_WIDTH / 2;
+            player.y = window.GAME_HEIGHT * 0.72;
+            highestYGenerated = window.GAME_HEIGHT * 0.85;
 
             // Regenerate obstacles correctly
             obstacles.length = 0;
@@ -1288,7 +1298,7 @@ function createGame(soundEffects, currentLevel, onGameOver, onVictory) {
             ctx.beginPath();
             ctx.arc(p.x, p.y - cameraY, p.radius, 0, Math.PI * 2);
             ctx.fillStyle = p.color;
-            ctx.shadowBlur = 6;
+            ctx.shadowBlur = (6) * (window.SHADOW_MULT !== undefined ? window.SHADOW_MULT : 1);
             ctx.shadowColor = p.color;
             ctx.fill();
             ctx.restore();
@@ -1320,7 +1330,7 @@ function createGame(soundEffects, currentLevel, onGameOver, onVictory) {
         const speedVal = type === 'broken_line' ? baseSpeed * 1.6 : baseSpeed;
         const obstacle = {
             id: Date.now() + Math.random(),
-            x: canvas.width / 2,
+            x: window.GAME_WIDTH / 2,
             y: spawnY,
             type: type,
             radius: 84,
@@ -1402,7 +1412,7 @@ function createGame(soundEffects, currentLevel, onGameOver, onVictory) {
         ctx.lineTo(cx, cy - outerRadius);
         ctx.closePath();
         ctx.fillStyle = '#ffea00';
-        ctx.shadowBlur = 10;
+        ctx.shadowBlur = (10) * (window.SHADOW_MULT !== undefined ? window.SHADOW_MULT : 1);
         ctx.shadowColor = '#ffea00';
         ctx.fill();
     }
@@ -1436,7 +1446,7 @@ function createGame(soundEffects, currentLevel, onGameOver, onVictory) {
                 const endAngle = startAngle + Math.PI / 2;
                 ctx.arc(cx, cy, obs.radius, startAngle, endAngle);
                 ctx.strokeStyle = COLORS[i];
-                ctx.shadowBlur = 8;
+                ctx.shadowBlur = (8) * (window.SHADOW_MULT !== undefined ? window.SHADOW_MULT : 1);
                 ctx.shadowColor = COLORS[i];
                 ctx.stroke();
             }
@@ -1461,7 +1471,7 @@ function createGame(soundEffects, currentLevel, onGameOver, onVictory) {
                 const endAngle = startAngle + Math.PI / 2;
                 ctx.arc(cx, cy, obs.radius, startAngle, endAngle);
                 ctx.strokeStyle = COLORS[i];
-                ctx.shadowBlur = 8;
+                ctx.shadowBlur = (8) * (window.SHADOW_MULT !== undefined ? window.SHADOW_MULT : 1);
                 ctx.shadowColor = COLORS[i];
                 ctx.stroke();
             }
@@ -1479,7 +1489,7 @@ function createGame(soundEffects, currentLevel, onGameOver, onVictory) {
                 ctx.moveTo(startX, startY);
                 ctx.lineTo(endX, endY);
                 ctx.strokeStyle = COLORS[i];
-                ctx.shadowBlur = 6;
+                ctx.shadowBlur = (6) * (window.SHADOW_MULT !== undefined ? window.SHADOW_MULT : 1);
                 ctx.shadowColor = COLORS[i];
                 ctx.stroke();
             }
@@ -1500,7 +1510,7 @@ function createGame(soundEffects, currentLevel, onGameOver, onVictory) {
                 ctx.moveTo(x1, y1);
                 ctx.lineTo(x2, y2);
                 ctx.strokeStyle = COLORS[i];
-                ctx.shadowBlur = 8;
+                ctx.shadowBlur = (8) * (window.SHADOW_MULT !== undefined ? window.SHADOW_MULT : 1);
                 ctx.shadowColor = COLORS[i];
                 ctx.stroke();
             }
@@ -1520,7 +1530,7 @@ function createGame(soundEffects, currentLevel, onGameOver, onVictory) {
                     ctx.moveTo(baseStartX + i * segmentWidth, cy);
                     ctx.lineTo(baseStartX + (i + 1) * segmentWidth, cy);
                     ctx.strokeStyle = COLORS[i];
-                    ctx.shadowBlur = 8;
+                    ctx.shadowBlur = (8) * (window.SHADOW_MULT !== undefined ? window.SHADOW_MULT : 1);
                     ctx.shadowColor = COLORS[i];
                     ctx.stroke();
                 }
@@ -1533,26 +1543,26 @@ function createGame(soundEffects, currentLevel, onGameOver, onVictory) {
     function drawFans() {
         for (let fan of fans) {
             const cy = fan.y - cameraY;
-            if (cy < -150 || cy > canvas.height + 150) continue;
+            if (cy < -150 || cy > window.GAME_HEIGHT + 150) continue;
 
             // Semi-transparent wind background zone
             ctx.save();
             ctx.fillStyle = 'rgba(0, 240, 255, 0.035)';
-            ctx.fillRect(0, cy - fan.height/2, canvas.width, fan.height);
+            ctx.fillRect(0, cy - fan.height/2, window.GAME_WIDTH, fan.height);
             ctx.strokeStyle = 'rgba(0, 240, 255, 0.14)';
             ctx.lineWidth = 1.5;
             ctx.setLineDash([4, 12]);
             ctx.beginPath();
             ctx.moveTo(0, cy - fan.height/2);
-            ctx.lineTo(canvas.width, cy - fan.height/2);
+            ctx.lineTo(window.GAME_WIDTH, cy - fan.height/2);
             ctx.moveTo(0, cy + fan.height/2);
-            ctx.lineTo(canvas.width, cy + fan.height/2);
+            ctx.lineTo(window.GAME_WIDTH, cy + fan.height/2);
             ctx.stroke();
             ctx.restore();
 
             // Draw Left/Right housing fan blade widgets
             drawFanBladeWidget(15, cy, fan.bladeAngle);
-            drawFanBladeWidget(canvas.width - 15, cy, -fan.bladeAngle);
+            drawFanBladeWidget(window.GAME_WIDTH - 15, cy, -fan.bladeAngle);
         }
     }
 
@@ -1564,7 +1574,7 @@ function createGame(soundEffects, currentLevel, onGameOver, onVictory) {
         ctx.fill();
         ctx.lineWidth = 2;
         ctx.strokeStyle = '#00f0ff';
-        ctx.shadowBlur = 8;
+        ctx.shadowBlur = (8) * (window.SHADOW_MULT !== undefined ? window.SHADOW_MULT : 1);
         ctx.shadowColor = '#00f0ff';
         ctx.stroke();
 
@@ -1586,7 +1596,7 @@ function createGame(soundEffects, currentLevel, onGameOver, onVictory) {
             ctx.beginPath();
             ctx.arc(b.x, b.y - cameraY, b.radius, 0, Math.PI * 2);
             ctx.fillStyle = b.color;
-            ctx.shadowBlur = 10;
+            ctx.shadowBlur = (10) * (window.SHADOW_MULT !== undefined ? window.SHADOW_MULT : 1);
             ctx.shadowColor = b.color;
             ctx.fill();
             ctx.restore();
@@ -1602,31 +1612,31 @@ function createGame(soundEffects, currentLevel, onGameOver, onVictory) {
         ctx.strokeStyle = 'rgba(255, 255, 255, 0.12)';
         ctx.lineWidth = 2;
         ctx.beginPath();
-        ctx.moveTo(canvas.width / 2, 0);
-        ctx.lineTo(canvas.width / 2, canvas.height);
+        ctx.moveTo(window.GAME_WIDTH / 2, 0);
+        ctx.lineTo(window.GAME_WIDTH / 2, window.GAME_HEIGHT);
         ctx.stroke();
 
         // Horizontal slider track
         const barY = 92;
         const barW = 150;
-        const barX = canvas.width / 2 - barW / 2;
+        const barX = window.GAME_WIDTH / 2 - barW / 2;
 
         ctx.fillStyle = 'rgba(255, 255, 255, 0.15)';
         ctx.fillRect(barX, barY - 2, barW, 4);
 
         // Center notch
         ctx.fillStyle = '#ffffff';
-        ctx.fillRect(canvas.width / 2 - 1.5, barY - 6, 3, 12);
+        ctx.fillRect(window.GAME_WIDTH / 2 - 1.5, barY - 6, 3, 12);
 
         // Balance marker
-        const maxDev = canvas.width / 2;
-        const deviation = player.x - canvas.width / 2;
-        const markerX = canvas.width / 2 + (deviation / maxDev) * (barW / 2);
+        const maxDev = window.GAME_WIDTH / 2;
+        const deviation = player.x - window.GAME_WIDTH / 2;
+        const markerX = window.GAME_WIDTH / 2 + (deviation / maxDev) * (barW / 2);
 
         ctx.beginPath();
         ctx.arc(markerX, barY, 6.5, 0, Math.PI * 2);
         ctx.fillStyle = player.color;
-        ctx.shadowBlur = 8;
+        ctx.shadowBlur = (8) * (window.SHADOW_MULT !== undefined ? window.SHADOW_MULT : 1);
         ctx.shadowColor = player.color;
         ctx.fill();
 
@@ -1635,14 +1645,14 @@ function createGame(soundEffects, currentLevel, onGameOver, onVictory) {
             ctx.fillStyle = '#ff007f';
             ctx.font = 'bold 11px sans-serif';
             ctx.textAlign = 'center';
-            ctx.shadowBlur = 6;
+            ctx.shadowBlur = (6) * (window.SHADOW_MULT !== undefined ? window.SHADOW_MULT : 1);
             ctx.shadowColor = '#ff007f';
-            ctx.fillText("⚠️ CRITICAL BALANCE! ⚠️", canvas.width / 2, barY + 20);
+            ctx.fillText("âš ï¸ CRITICAL BALANCE! âš ï¸", window.GAME_WIDTH / 2, barY + 20);
         } else {
             ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
             ctx.font = 'bold 9px sans-serif';
             ctx.textAlign = 'center';
-            ctx.fillText("BALANCE BALANCE", canvas.width / 2, barY + 16);
+            ctx.fillText("BALANCE BALANCE", window.GAME_WIDTH / 2, barY + 16);
         }
         ctx.restore();
     }
@@ -1651,12 +1661,12 @@ function createGame(soundEffects, currentLevel, onGameOver, onVictory) {
         if (!isRainActive) return;
         ctx.save();
         ctx.beginPath();
-        ctx.arc(canvas.width - 65, canvas.height - 75, 25, 0, Math.PI * 2);
+        ctx.arc(window.GAME_WIDTH - 65, window.GAME_HEIGHT - 75, 25, 0, Math.PI * 2);
         ctx.fillStyle = 'rgba(20, 20, 30, 0.85)';
         ctx.fill();
         ctx.lineWidth = 2.5;
         ctx.strokeStyle = '#ffea00';
-        ctx.shadowBlur = 10;
+        ctx.shadowBlur = (10) * (window.SHADOW_MULT !== undefined ? window.SHADOW_MULT : 1);
         ctx.shadowColor = '#ffea00';
         ctx.stroke();
 
@@ -1664,7 +1674,7 @@ function createGame(soundEffects, currentLevel, onGameOver, onVictory) {
         ctx.font = 'bold 11px sans-serif';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        ctx.fillText("SWAP", canvas.width - 65, canvas.height - 75);
+        ctx.fillText("SWAP", window.GAME_WIDTH - 65, window.GAME_HEIGHT - 75);
         ctx.restore();
     }
 
@@ -1680,32 +1690,32 @@ function createGame(soundEffects, currentLevel, onGameOver, onVictory) {
         ctx.globalAlpha = Math.min(Math.max(alpha, 0), 1);
 
         ctx.fillStyle = 'rgba(10, 10, 18, 0.82)';
-        ctx.fillRect(0, canvas.height * 0.35, canvas.width, 80);
+        ctx.fillRect(0, window.GAME_HEIGHT * 0.35, window.GAME_WIDTH, 80);
 
         ctx.lineWidth = 2;
         ctx.strokeStyle = '#00f0ff';
-        ctx.shadowBlur = 10;
+        ctx.shadowBlur = (10) * (window.SHADOW_MULT !== undefined ? window.SHADOW_MULT : 1);
         ctx.shadowColor = '#00f0ff';
         ctx.beginPath();
-        ctx.moveTo(0, canvas.height * 0.35);
-        ctx.lineTo(canvas.width, canvas.height * 0.35);
-        ctx.moveTo(0, canvas.height * 0.35 + 80);
-        ctx.lineTo(canvas.width, canvas.height * 0.35 + 80);
+        ctx.moveTo(0, window.GAME_HEIGHT * 0.35);
+        ctx.lineTo(window.GAME_WIDTH, window.GAME_HEIGHT * 0.35);
+        ctx.moveTo(0, window.GAME_HEIGHT * 0.35 + 80);
+        ctx.lineTo(window.GAME_WIDTH, window.GAME_HEIGHT * 0.35 + 80);
         ctx.stroke();
 
         ctx.fillStyle = '#ffea00';
         ctx.font = '900 17px sans-serif';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        ctx.shadowBlur = 8;
+        ctx.shadowBlur = (8) * (window.SHADOW_MULT !== undefined ? window.SHADOW_MULT : 1);
         ctx.shadowColor = '#ffea00';
-        ctx.fillText(challengeBannerText, canvas.width / 2, canvas.height * 0.35 + 26);
+        ctx.fillText(challengeBannerText, window.GAME_WIDTH / 2, window.GAME_HEIGHT * 0.35 + 26);
 
         ctx.fillStyle = '#ffffff';
         ctx.font = 'bold 10.5px sans-serif';
-        ctx.shadowBlur = 3;
+        ctx.shadowBlur = (3) * (window.SHADOW_MULT !== undefined ? window.SHADOW_MULT : 1);
         ctx.shadowColor = '#ffffff';
-        ctx.fillText(challengeBannerSubtext, canvas.width / 2, canvas.height * 0.35 + 54);
+        ctx.fillText(challengeBannerSubtext, window.GAME_WIDTH / 2, window.GAME_HEIGHT * 0.35 + 54);
 
         ctx.restore();
     }
@@ -1909,7 +1919,7 @@ function createGame(soundEffects, currentLevel, onGameOver, onVictory) {
         // If entity goes below the bottom viewport edge, remove it and generate a new obstacle higher up
         for (let i = obstacles.length - 1; i >= 0; i--) {
             const obs = obstacles[i];
-            if (obs.y - cameraY > canvas.height + 150) {
+            if (obs.y - cameraY > window.GAME_HEIGHT + 150) {
                 obstacles.splice(i, 1);
                 
                 // Clear corresponding star & switcher
@@ -2008,14 +2018,14 @@ function createGame(soundEffects, currentLevel, onGameOver, onVictory) {
         if (!isPlaying) {
             // Draw death explosion frame sequence
             ctx.fillStyle = `rgba(${bgR}, ${bgG}, ${bgB}, 0.4)`;
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.fillRect(0, 0, window.GAME_WIDTH, window.GAME_HEIGHT);
             updateAndDrawParticles();
             animationId = requestAnimationFrame(loop);
             return;
         }
 
         ctx.fillStyle = `rgba(${bgR}, ${bgG}, ${bgB}, 0.55)`; // subtle trace trailing
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.fillRect(0, 0, window.GAME_WIDTH, window.GAME_HEIGHT);
 
         // Update and draw ambient background particles (with parallax ascent)
         const dCamY = cameraY - lastCameraY;
@@ -2027,11 +2037,11 @@ function createGame(soundEffects, currentLevel, onGameOver, onVictory) {
             p.y -= dCamY * 0.28;
 
             if (p.y < 0) {
-                p.y = canvas.height;
-                p.x = Math.random() * canvas.width;
-            } else if (p.y > canvas.height) {
+                p.y = window.GAME_HEIGHT;
+                p.x = Math.random() * window.GAME_WIDTH;
+            } else if (p.y > window.GAME_HEIGHT) {
                 p.y = 0;
-                p.x = Math.random() * canvas.width;
+                p.x = Math.random() * window.GAME_WIDTH;
             }
 
             ctx.beginPath();
@@ -2039,7 +2049,7 @@ function createGame(soundEffects, currentLevel, onGameOver, onVictory) {
             const pColor = player.color;
             ctx.fillStyle = pColor;
             ctx.globalAlpha = p.alpha * 0.45; // softer since they are matching player color
-            ctx.shadowBlur = 4;
+            ctx.shadowBlur = (4) * (window.SHADOW_MULT !== undefined ? window.SHADOW_MULT : 1);
             ctx.shadowColor = pColor;
             ctx.fill();
         }
@@ -2105,7 +2115,7 @@ function createGame(soundEffects, currentLevel, onGameOver, onVictory) {
                     player.vy += fan.strength; // push downwards
                     if (Math.random() < 0.28) {
                         particles.push({
-                            x: Math.random() * canvas.width,
+                            x: Math.random() * window.GAME_WIDTH,
                             y: fan.y - fan.height/2,
                             vx: (Math.random() - 0.5) * 0.5,
                             vy: 4 + Math.random() * 3,
@@ -2119,7 +2129,7 @@ function createGame(soundEffects, currentLevel, onGameOver, onVictory) {
             }
             // Recycle fans
             for (let i = fans.length - 1; i >= 0; i--) {
-                if (fans[i].y - cameraY > canvas.height + 150) {
+                if (fans[i].y - cameraY > window.GAME_HEIGHT + 150) {
                     fans.splice(i, 1);
                 }
             }
@@ -2130,7 +2140,7 @@ function createGame(soundEffects, currentLevel, onGameOver, onVictory) {
                 if (rainSpawnTimer <= 0) {
                     rainSpawnTimer = 65 + Math.random() * 45;
                     rainingBalls.push({
-                        x: 40 + Math.random() * (canvas.width - 80),
+                        x: 40 + Math.random() * (window.GAME_WIDTH - 80),
                         y: cameraY - 40,
                         vy: 2.8 + Math.random() * 2.2,
                         radius: 9,
@@ -2146,7 +2156,7 @@ function createGame(soundEffects, currentLevel, onGameOver, onVictory) {
                 const b = rainingBalls[i];
                 b.y += b.vy;
 
-                if (b.y - cameraY > canvas.height + 40) {
+                if (b.y - cameraY > window.GAME_HEIGHT + 40) {
                     rainingBalls.splice(i, 1);
                     continue;
                 }
@@ -2214,13 +2224,13 @@ function createGame(soundEffects, currentLevel, onGameOver, onVictory) {
             }
 
             // Safe check for dropping below bottom of screen
-            if (player.y - cameraY > canvas.height + player.radius) {
+            if (player.y - cameraY > window.GAME_HEIGHT + player.radius) {
                 triggerGameOver();
                 return;
             }
 
             // Camera scroll easing (follows player smoothly upwards)
-            const targetCamY = player.y - canvas.height * 0.52;
+            const targetCamY = player.y - window.GAME_HEIGHT * 0.52;
             if (targetCamY < cameraY) {
                 cameraY += (targetCamY - cameraY) * 0.08;
             }
@@ -2242,14 +2252,14 @@ function createGame(soundEffects, currentLevel, onGameOver, onVictory) {
 
         // Drawing Phase
         // Draw Ground Line
-        if (groundY - cameraY < canvas.height + 50) {
+        if (groundY - cameraY < window.GAME_HEIGHT + 50) {
             ctx.save();
             ctx.beginPath();
             ctx.moveTo(0, groundY - cameraY);
-            ctx.lineTo(canvas.width, groundY - cameraY);
+            ctx.lineTo(window.GAME_WIDTH, groundY - cameraY);
             ctx.strokeStyle = 'rgba(255, 255, 255, 0.45)';
             ctx.lineWidth = 5;
-            ctx.shadowBlur = 15;
+            ctx.shadowBlur = (15) * (window.SHADOW_MULT !== undefined ? window.SHADOW_MULT : 1);
             ctx.shadowColor = 'rgba(0, 240, 255, 0.6)';
             ctx.stroke();
             ctx.restore();
@@ -2259,7 +2269,7 @@ function createGame(soundEffects, currentLevel, onGameOver, onVictory) {
         if (respawnPlatform) {
             ctx.save();
             ctx.fillStyle = 'rgba(0, 240, 255, 0.85)';
-            ctx.shadowBlur = 12;
+            ctx.shadowBlur = (12) * (window.SHADOW_MULT !== undefined ? window.SHADOW_MULT : 1);
             ctx.shadowColor = '#00f0ff';
             ctx.fillRect(respawnPlatform.x - respawnPlatform.width / 2, respawnPlatform.y - cameraY, respawnPlatform.width, respawnPlatform.height);
             ctx.restore();
@@ -2344,8 +2354,8 @@ function createGame(soundEffects, currentLevel, onGameOver, onVictory) {
                 const relativeX = tapX - rect.left;
                 const relativeY = tapY - rect.top;
 
-                const btnX = canvas.width - 65;
-                const btnY = canvas.height - 75;
+                const btnX = window.GAME_WIDTH - 65;
+                const btnY = window.GAME_HEIGHT - 75;
                 const btnR = 35; // tap buffer
 
                 const distToBtn = Math.hypot(relativeX - btnX, relativeY - btnY);

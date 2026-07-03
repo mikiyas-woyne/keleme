@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Color Twist - Modular Obstacle Framework
  * This file contains the complete Obstacle Registry and Obstacle Manager.
  * It provides 50+ custom obstacle types across 10 distinct categories.
@@ -56,13 +56,13 @@ const ObstacleUtils = {
 
     // Draw glow shadow
     applyGlow: function (ctx, color, blur = 10) {
-        ctx.shadowBlur = blur;
+        ctx.shadowBlur = (blur) * (window.SHADOW_MULT !== undefined ? window.SHADOW_MULT : 1);
         ctx.shadowColor = color;
     },
 
     // Remove glow shadow
     clearGlow: function (ctx) {
-        ctx.shadowBlur = 0;
+        ctx.shadowBlur = (0) * (window.SHADOW_MULT !== undefined ? window.SHADOW_MULT : 1);
     }
 };
 
@@ -175,7 +175,7 @@ registerObstacle('piston_press', {
         ctx.save();
         ctx.fillStyle = '#00f0ff';
         ObstacleUtils.applyGlow(ctx, '#00f0ff', 12);
-        ctx.fillRect(ctx.canvas.width - obs.extension, cy - h / 2, obs.extension, h);
+        ctx.fillRect(window.GAME_WIDTH - obs.extension, cy - h / 2, obs.extension, h);
         ctx.restore();
     },
     checkCollision: function (obs, player) {
@@ -184,7 +184,7 @@ registerObstacle('piston_press', {
             if (player.color !== '#ff007f') return true;
         }
         // Right Piston
-        if (player.x + player.radius > ctx.canvas.width - obs.extension && Math.abs(player.y - obs.y) < player.radius + 12) {
+        if (player.x + player.radius > window.GAME_WIDTH - obs.extension && Math.abs(player.y - obs.y) < player.radius + 12) {
             if (player.color !== '#00f0ff') return true;
         }
         return false;
@@ -261,11 +261,11 @@ registerObstacle('conveyor_belt', {
         ctx.save();
         ctx.strokeStyle = '#334155';
         ctx.lineWidth = 6;
-        ctx.strokeRect(30, cy - 10, ctx.canvas.width - 60, 20);
+        ctx.strokeRect(30, cy - 10, window.GAME_WIDTH - 60, 20);
         ctx.restore();
 
         // Moving gears on the belt
-        for (let x = 40 + obs.offset; x < ctx.canvas.width - 40; x += 120) {
+        for (let x = 40 + obs.offset; x < window.GAME_WIDTH - 40; x += 120) {
             const idx = Math.floor(x / 120) % 4;
             const color = OBSTACLE_COLORS[idx];
             ctx.save();
@@ -279,7 +279,7 @@ registerObstacle('conveyor_belt', {
     },
     checkCollision: function (obs, player) {
         if (Math.abs(player.y - obs.y) < player.radius + 14) {
-            for (let x = 40 + obs.offset; x < ctx.canvas.width - 40; x += 120) {
+            for (let x = 40 + obs.offset; x < window.GAME_WIDTH - 40; x += 120) {
                 if (Math.hypot(player.x - x, player.y - obs.y) < player.radius + 14) {
                     const idx = Math.floor(x / 120) % 4;
                     if (OBSTACLE_COLORS[idx] !== player.color) return true;
@@ -338,7 +338,7 @@ registerObstacle('crusher_walls', {
         ctx.save();
         ctx.fillStyle = '#b026ff';
         ObstacleUtils.applyGlow(ctx, '#b026ff', 10);
-        ctx.fillRect(ctx.canvas.width - 20 - obs.offset, cy - 30, 100, 60);
+        ctx.fillRect(window.GAME_WIDTH - 20 - obs.offset, cy - 30, 100, 60);
         ctx.restore();
     },
     checkCollision: function (obs, player) {
@@ -348,7 +348,7 @@ registerObstacle('crusher_walls', {
                 if (player.color !== '#ffea00') return true;
             }
             // Right block overlap
-            if (player.x + player.radius > ctx.canvas.width - 20 - obs.offset) {
+            if (player.x + player.radius > window.GAME_WIDTH - 20 - obs.offset) {
                 if (player.color !== '#b026ff') return true;
             }
         }
@@ -383,7 +383,7 @@ registerObstacle('laser_gate', {
         ctx.save();
         ctx.fillStyle = '#64748b';
         ctx.fillRect(20, cy - 10, 20, 20);
-        ctx.fillRect(ctx.canvas.width - 40, cy - 10, 20, 20);
+        ctx.fillRect(window.GAME_WIDTH - 40, cy - 10, 20, 20);
         ctx.restore();
 
         if (isActive) {
@@ -393,7 +393,7 @@ registerObstacle('laser_gate', {
             ObstacleUtils.applyGlow(ctx, obs.color, 15);
             ctx.beginPath();
             ctx.moveTo(40, cy);
-            ctx.lineTo(ctx.canvas.width - 40, cy);
+            ctx.lineTo(window.GAME_WIDTH - 40, cy);
             ctx.stroke();
             ctx.restore();
         }
@@ -562,7 +562,7 @@ registerObstacle('laser_grid', {
             ObstacleUtils.applyGlow(ctx, color, 10);
             ctx.beginPath();
             ctx.moveTo(30, yPos);
-            ctx.lineTo(ctx.canvas.width - 30, yPos);
+            ctx.lineTo(window.GAME_WIDTH - 30, yPos);
             ctx.stroke();
         }
         ctx.restore();
@@ -817,7 +817,7 @@ registerObstacle('portal_warp', {
         if (obs.warpCooldown > 0) obs.warpCooldown--;
 
         const lPortX = 60;
-        const rPortX = ctx.canvas.width - 60;
+        const rPortX = window.GAME_WIDTH - 60;
 
         if (obs.warpCooldown === 0) {
             // Check Left Portal trigger
@@ -850,7 +850,7 @@ registerObstacle('portal_warp', {
         ctx.strokeStyle = '#3b82f6';
         ctx.lineWidth = 4;
         ObstacleUtils.applyGlow(ctx, '#3b82f6', 15);
-        ctx.strokeRect(ctx.canvas.width - 56, cy - 25, 16, 50);
+        ctx.strokeRect(window.GAME_WIDTH - 56, cy - 25, 16, 50);
         ctx.restore();
     },
     checkCollision: function (obs, player) {
@@ -980,7 +980,7 @@ registerObstacle('portal_quantum', {
     update: function (obs, player) {
         obs.timer++;
         if (obs.timer % 90 === 0) {
-            obs.px = 60 + Math.random() * (ctx.canvas.width - 120);
+            obs.px = 60 + Math.random() * (window.GAME_WIDTH - 120);
         }
     },
     draw: function (ctx, obs, cameraY) {
@@ -1388,7 +1388,7 @@ registerObstacle('living_slime', {
 
         // Bouncing slime nodes
         for (let i = 0; i < 2; i++) {
-            const sx = i === 0 ? 40 + drift : ctx.canvas.width - 40 - drift;
+            const sx = i === 0 ? 40 + drift : window.GAME_WIDTH - 40 - drift;
             const color = OBSTACLE_COLORS[i === 0 ? 1 : 3];
             ctx.save();
             ctx.fillStyle = color;
@@ -1402,7 +1402,7 @@ registerObstacle('living_slime', {
     checkCollision: function (obs, player) {
         const drift = Math.sin(obs.phase) * 50;
         for (let i = 0; i < 2; i++) {
-            const sx = i === 0 ? 40 + drift : ctx.canvas.width - 40 - drift;
+            const sx = i === 0 ? 40 + drift : window.GAME_WIDTH - 40 - drift;
             if (Math.hypot(player.x - sx, player.y - obs.y) < player.radius + 18) {
                 const color = OBSTACLE_COLORS[i === 0 ? 1 : 3];
                 if (player.color !== color) return true;
@@ -1426,7 +1426,7 @@ registerObstacle('motion_zigzag', {
     },
     update: function (obs, player) {
         obs.sx += 2.5 * obs.dir;
-        if (obs.sx > ctx.canvas.width - 80) obs.dir = -1;
+        if (obs.sx > window.GAME_WIDTH - 80) obs.dir = -1;
         if (obs.sx < 80) obs.dir = 1;
         obs.rotation += 0.02;
     },
@@ -1841,7 +1841,7 @@ registerObstacle('optical_shroud', {
 
             // Create path with hole around player
             ctx.beginPath();
-            ctx.rect(0, 0, ctx.canvas.width, ctx.canvas.height);
+            ctx.rect(0, 0, window.GAME_WIDTH, window.GAME_HEIGHT);
             ctx.arc(player.x, player.y - cameraY, 110, 0, Math.PI * 2, true);
             ctx.fill();
             ctx.restore();
@@ -2029,7 +2029,7 @@ registerObstacle('precision_lock', {
         ctx.strokeStyle = gateColor;
         ctx.lineWidth = 6;
         ObstacleUtils.applyGlow(ctx, gateColor, 10);
-        ctx.strokeRect(40, cy - 10, ctx.canvas.width - 80, 20);
+        ctx.strokeRect(40, cy - 10, window.GAME_WIDTH - 80, 20);
         ctx.restore();
     },
     checkCollision: function (obs, player) {
@@ -2277,7 +2277,7 @@ registerObstacle('boss_titan', {
         ctx.save();
         ctx.fillStyle = '#ff007f';
         ObstacleUtils.applyGlow(ctx, '#ff007f', 15);
-        ctx.fillRect(ctx.canvas.width - 30 - slam, cy - 40, 90, 80);
+        ctx.fillRect(window.GAME_WIDTH - 30 - slam, cy - 40, 90, 80);
         ctx.restore();
     },
     checkCollision: function (obs, player) {
@@ -2286,7 +2286,7 @@ registerObstacle('boss_titan', {
             if (player.x - player.radius < 30 + slam) {
                 if (player.color !== '#00f0ff') return true;
             }
-            if (player.x + player.radius > ctx.canvas.width - 30 - slam) {
+            if (player.x + player.radius > window.GAME_WIDTH - 30 - slam) {
                 if (player.color !== '#ff007f') return true;
             }
         }
