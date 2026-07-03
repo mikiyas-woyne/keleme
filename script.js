@@ -446,17 +446,17 @@ const GameStateManager = {
     renderLevelsList() {
         const grid = document.getElementById('levels-list');
         grid.innerHTML = '';
-        
+
         let maxUnlocked = parseInt(SafeStorage.getItem('colortwist_max_unlocked') || SafeStorage.getItem('keleme_max_unlocked') || '1', 10);
         if (isNaN(maxUnlocked) || maxUnlocked < 1) maxUnlocked = 1;
-        
+
         LEVELS.forEach(level => {
             const card = document.createElement('div');
             card.className = 'level-card';
-            
+
             const isCompleted = level.id < maxUnlocked;
             const isUnlocked = level.id <= maxUnlocked;
-            
+
             let badgeClass = 'badge-locked';
             let badgeText = 'LOCKED';
             if (isCompleted) {
@@ -470,7 +470,7 @@ const GameStateManager = {
             } else {
                 card.classList.add('locked');
             }
-            
+
             card.innerHTML = `
                 <div class="level-info">
                     <span class="level-num">Level ${level.id}</span>
@@ -479,7 +479,7 @@ const GameStateManager = {
                 </div>
                 <span class="level-badge ${badgeClass}">${badgeText}</span>
             `;
-            
+
             if (isUnlocked) {
                 card.addEventListener('click', () => {
                     this.soundEffects.init();
@@ -487,7 +487,7 @@ const GameStateManager = {
                     this.transitionTo('GAME');
                 });
             }
-            
+
             grid.appendChild(card);
         });
     },
@@ -498,17 +498,17 @@ const GameStateManager = {
     renderSkinsList() {
         const grid = document.getElementById('shop-skins-list');
         grid.innerHTML = '';
-        
+
         SKINS.forEach(skin => {
             const card = document.createElement('div');
             card.className = 'level-card';
-            
+
             const isUnlocked = unlockedSkins.includes(skin.id);
             const isActive = activeSkin === skin.id;
-            
+
             let badgeClass = 'badge-locked';
             let badgeText = `${skin.cost} â˜…`;
-            
+
             if (isActive) {
                 card.classList.add('completed');
                 badgeClass = 'badge-unlocked';
@@ -520,7 +520,7 @@ const GameStateManager = {
             } else {
                 card.classList.add('locked');
             }
-            
+
             card.innerHTML = `
                 <div class="level-info" style="flex: 1; text-align: left;">
                     <span class="level-num" style="color: #a855f7; font-size: 1.1rem; font-weight: bold; display: block;">${skin.name}</span>
@@ -528,13 +528,13 @@ const GameStateManager = {
                 </div>
                 <span class="level-badge ${badgeClass}" style="min-width: 80px; text-align: center;">${badgeText}</span>
             `;
-            
+
             card.addEventListener('click', () => {
                 this.soundEffects.init();
                 this.selectPreviewSkin(skin.id);
-                
+
                 if (isActive) return;
-                
+
                 if (isUnlocked) {
                     activeSkin = skin.id;
                     SafeStorage.setItem('colortwist_active_skin', activeSkin);
@@ -549,7 +549,7 @@ const GameStateManager = {
                         activeSkin = skin.id;
                         SafeStorage.setItem('colortwist_active_skin', activeSkin);
                         this.soundEffects.playStar();
-                        
+
                         document.getElementById('menu-coin-count').textContent = coins;
                         document.getElementById('shop-coin-count').textContent = coins;
                         this.renderSkinsList();
@@ -560,7 +560,7 @@ const GameStateManager = {
                     }
                 }
             });
-            
+
             grid.appendChild(card);
         });
     },
@@ -579,27 +579,27 @@ const GameStateManager = {
         if (!canvas) return;
         const ctx = canvas.getContext('2d');
         const self = this;
-        
+
         if (this.previewAnimationId) cancelAnimationFrame(this.previewAnimationId);
-        
+
         function tick() {
             if (self.currentState !== 'SHOP') return;
             ctx.clearRect(0, 0, window.GAME_WIDTH, window.GAME_HEIGHT);
-            
+
             const x = window.GAME_WIDTH / 2;
             const y = window.GAME_HEIGHT / 2;
             const radius = 18;
             const color = '#00f0ff';
-            
+
             ctx.save();
             ctx.translate(x, y);
-            
+
             const pulse = 1.0 + 0.08 * Math.sin(Date.now() / 150);
-            
+
             ctx.shadowBlur = (15) * (window.SHADOW_MULT !== undefined ? window.SHADOW_MULT : 1);
             ctx.shadowColor = color;
             ctx.fillStyle = color;
-            
+
             if (self.previewSkinId === 'standard') {
                 ctx.beginPath();
                 ctx.arc(0, 0, radius * pulse, 0, Math.PI * 2);
@@ -628,7 +628,7 @@ const GameStateManager = {
                 ctx.stroke();
                 ctx.fill();
                 ctx.beginPath();
-                ctx.arc(Math.cos(-angle*1.5) * radius * 1.6, Math.sin(-angle*1.5) * radius * 1.6, 2.5, 0, Math.PI * 2);
+                ctx.arc(Math.cos(-angle * 1.5) * radius * 1.6, Math.sin(-angle * 1.5) * radius * 1.6, 2.5, 0, Math.PI * 2);
                 ctx.fill();
             } else if (self.previewSkinId === 'cyber_octagon') {
                 const rot1 = (Date.now() / 600) % (Math.PI * 2);
@@ -644,7 +644,7 @@ const GameStateManager = {
                 ctx.closePath();
                 ctx.stroke();
                 ctx.restore();
-                
+
                 ctx.save();
                 ctx.rotate(-rot1 * 1.3);
                 ctx.beginPath();
@@ -657,7 +657,7 @@ const GameStateManager = {
                 ctx.lineWidth = 1.5;
                 ctx.stroke();
                 ctx.restore();
-                
+
                 ctx.beginPath();
                 ctx.arc(0, 0, radius * 0.3 * pulse, 0, Math.PI * 2);
                 ctx.fill();
@@ -672,12 +672,12 @@ const GameStateManager = {
                 ctx.arc(0, 0, radius * 1.5 * pulse, 0, Math.PI * 2);
                 ctx.stroke();
                 ctx.restore();
-                
+
                 ctx.beginPath();
                 ctx.arc(0, 0, radius * 0.7 * pulse, 0, Math.PI * 2);
                 ctx.fill();
             }
-            
+
             ctx.restore();
             self.previewAnimationId = requestAnimationFrame(tick);
         }
@@ -717,7 +717,7 @@ const GameStateManager = {
             document.getElementById('shop-screen').classList.add('active');
         } else if (state === 'GAME') {
             document.getElementById('game-container').classList.add('active');
-            
+
             const levelHud = document.getElementById('level-hud');
             if (this.currentLevel) {
                 document.getElementById('level-hud-name').textContent = `LEVEL ${this.currentLevel.id}: ${this.currentLevel.name.toUpperCase()}`;
@@ -757,10 +757,10 @@ const GameStateManager = {
             const currentId = this.currentLevel.id;
             let maxUnlocked = parseInt(SafeStorage.getItem('colortwist_max_unlocked') || SafeStorage.getItem('keleme_max_unlocked') || '1', 10);
             if (isNaN(maxUnlocked) || maxUnlocked < 1) maxUnlocked = 1;
-            
+
             // Update victory screen details
             document.getElementById('victory-level-name').textContent = `${this.currentLevel.name.toUpperCase()} COMPLETE`;
-            
+
             // Stars system display according to lives used
             let starCount = 1;
             if (livesRemaining === 3) {
@@ -770,12 +770,12 @@ const GameStateManager = {
             } else {
                 starCount = 1;
             }
-            
+
             // Render active and inactive stars
             document.getElementById('star-1').classList.toggle('active', starCount >= 1);
             document.getElementById('star-2').classList.toggle('active', starCount >= 2);
             document.getElementById('star-3').classList.toggle('active', starCount >= 3);
-            
+
             // Star rating label
             const labelText = starCount === 3 ? "PERFECT! 3 STARS" : (starCount === 2 ? "GREAT! 2 STARS" : "CLEARED! 1 STAR");
             document.getElementById('star-rating-label').textContent = labelText;
@@ -785,7 +785,7 @@ const GameStateManager = {
             const nextLevelExists = LEVELS.some(l => l.id === nextLevelId);
             const nextBtn = document.getElementById('next-level-btn');
             const victoryMsg = document.getElementById('victory-message');
-            
+
             if (currentId === maxUnlocked) {
                 // Unlock next level!
                 SafeStorage.setItem('colortwist_max_unlocked', (currentId + 1).toString());
@@ -959,14 +959,14 @@ function createGame(soundEffects, currentLevel, onGameOver, onVictory) {
         if (lives > 0) {
             lives--;
             updateLivesHUD();
-            
+
             // Safe Respawn slightly below where the camera currently is, onto a temporary safe platform
             player.x = window.GAME_WIDTH / 2;
             player.y = cameraY + window.GAME_HEIGHT - 180;
             player.vy = -5.0; // gentle initial upward drift
             player.vx = 0;
             player.color = COLORS[Math.floor(Math.random() * COLORS.length)];
-            
+
             // Create a safe, temporary platform directly under the player
             respawnPlatform = {
                 x: window.GAME_WIDTH / 2,
@@ -975,10 +975,10 @@ function createGame(soundEffects, currentLevel, onGameOver, onVictory) {
                 height: 8,
                 timer: 180 // lasts 3 seconds, vanishes when the player jumps
             };
-            
+
             isInvulnerable = true;
             invulnerableTimer = 150; // 2.5 seconds of flashing invulnerability
-            
+
             continueModal.style.display = 'none';
             isPaused = false;
         }
@@ -989,7 +989,7 @@ function createGame(soundEffects, currentLevel, onGameOver, onVictory) {
         scoreText.textContent = '0';
         lives = 3;
         updateLivesHUD();
-        
+
         // Reset player, camera state
         player.x = window.GAME_WIDTH / 2;
         player.y = window.GAME_HEIGHT * 0.72;
@@ -997,7 +997,7 @@ function createGame(soundEffects, currentLevel, onGameOver, onVictory) {
         player.color = COLORS[Math.floor(Math.random() * COLORS.length)];
         cameraY = 0;
         highestYGenerated = window.GAME_HEIGHT * 0.85;
-        
+
         // Rebuild initial layout
         obstacles.length = 0;
         collectables.length = 0;
@@ -1006,7 +1006,7 @@ function createGame(soundEffects, currentLevel, onGameOver, onVictory) {
         for (let i = 0; i < 3; i++) {
             generateNextObstacle();
         }
-        
+
         continueModal.style.display = 'none';
         isPaused = false;
     }
@@ -1043,13 +1043,13 @@ function createGame(soundEffects, currentLevel, onGameOver, onVictory) {
         color: COLORS[Math.floor(Math.random() * COLORS.length)],
         stretchX: 1,
         stretchY: 1,
-        
+
         jump(dir) {
             this.vy = physics.jump;
             this.stretchY = 1.45;
             this.stretchX = 0.65;
             respawnPlatform = null; // Clear respawn platform on first jump
-            
+
             if (isBalanceActive) {
                 if (dir === 'left') {
                     this.vx = -3.2;
@@ -1107,7 +1107,7 @@ function createGame(soundEffects, currentLevel, onGameOver, onVictory) {
                 this.x += (window.GAME_WIDTH / 2 - this.x) * 0.1;
                 this.vx = 0;
             }
-            
+
             // Smoothly ease squash and stretch back to 1
             this.stretchX += (1 - this.stretchX) * 0.12;
             this.stretchY += (1 - this.stretchY) * 0.12;
@@ -1119,7 +1119,7 @@ function createGame(soundEffects, currentLevel, onGameOver, onVictory) {
             }
             ctx.save();
             ctx.translate(this.x, this.y - cameraY);
-            
+
             ctx.shadowBlur = (12) * (window.SHADOW_MULT !== undefined ? window.SHADOW_MULT : 1);
             ctx.shadowColor = this.color;
             ctx.fillStyle = this.color;
@@ -1150,10 +1150,10 @@ function createGame(soundEffects, currentLevel, onGameOver, onVictory) {
                 ctx.closePath();
                 ctx.stroke();
                 ctx.fill();
-                
+
                 // Outer orbit dot
                 ctx.beginPath();
-                ctx.arc(Math.cos(-angle*1.6) * this.radius * 1.5, Math.sin(-angle*1.6) * this.radius * 1.5, 2.5, 0, Math.PI * 2);
+                ctx.arc(Math.cos(-angle * 1.6) * this.radius * 1.5, Math.sin(-angle * 1.6) * this.radius * 1.5, 2.5, 0, Math.PI * 2);
                 ctx.fill();
             } else if (activeSkin === 'cyber_octagon') {
                 const rot1 = (Date.now() / 450) % (Math.PI * 2);
@@ -1168,7 +1168,7 @@ function createGame(soundEffects, currentLevel, onGameOver, onVictory) {
                 ctx.closePath();
                 ctx.stroke();
                 ctx.restore();
-                
+
                 ctx.save();
                 ctx.rotate(-rot1 * 1.3);
                 ctx.lineWidth = 1.5;
@@ -1180,14 +1180,14 @@ function createGame(soundEffects, currentLevel, onGameOver, onVictory) {
                 ctx.closePath();
                 ctx.stroke();
                 ctx.restore();
-                
+
                 ctx.beginPath();
                 ctx.ellipse(0, 0, (this.radius * 0.3) * this.stretchX, (this.radius * 0.3) * this.stretchY, 0, 0, Math.PI * 2);
                 ctx.fill();
             } else if (activeSkin === 'chrono_pulsar') {
                 const rot2 = (Date.now() / 600) % (Math.PI * 2);
                 const pulse = 1.0 + 0.12 * Math.sin(Date.now() / 120);
-                
+
                 ctx.save();
                 ctx.rotate(rot2);
                 ctx.lineWidth = 2;
@@ -1196,7 +1196,7 @@ function createGame(soundEffects, currentLevel, onGameOver, onVictory) {
                 ctx.ellipse(0, 0, this.radius * 1.5 * pulse, this.radius * 1.5 * pulse, 0, 0, Math.PI * 2);
                 ctx.stroke();
                 ctx.restore();
-                
+
                 ctx.beginPath();
                 ctx.ellipse(0, 0, (this.radius * 0.7) * this.stretchX, (this.radius * 0.7) * this.stretchY, 0, 0, Math.PI * 2);
                 ctx.fill();
@@ -1213,16 +1213,19 @@ function createGame(soundEffects, currentLevel, onGameOver, onVictory) {
 
         window.GAME_WIDTH = window.innerWidth || 360;
         window.GAME_HEIGHT = window.innerHeight || 640;
+
+        const isMobile = window.GAME_WIDTH <= 768 || ('ontouchstart' in window) || navigator.maxTouchPoints > 0;
         
-        const dpr = window.devicePixelRatio || 1;
+        // Optimizing DPR on mobile: using full DPR + shadowBlur causes massive lag.
+        // A dpr of 1 gives smooth 60fps while allowing us to keep full neon glow (SHADOW_MULT = 1).
+        const dpr = isMobile ? 1 : Math.min(window.devicePixelRatio || 1, 2);
         canvas.width = window.GAME_WIDTH * dpr;
         canvas.height = window.GAME_HEIGHT * dpr;
         canvas.style.width = window.GAME_WIDTH + "px";
         canvas.style.height = window.GAME_HEIGHT + "px";
         ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-        
-        const isMobile = window.GAME_WIDTH <= 768 || ('ontouchstart' in window) || navigator.maxTouchPoints > 0;
-        window.SHADOW_MULT = isMobile ? 0 : 1;
+
+        window.SHADOW_MULT = 1; // Keep full neon effects for all devices
 
         groundY = window.GAME_HEIGHT * 0.78;
 
@@ -1320,12 +1323,12 @@ function createGame(soundEffects, currentLevel, onGameOver, onVictory) {
             if (score >= 4) allowedTypes.push('double_circle');
             if (score >= 10) allowedTypes.push('broken_line');
         }
-        
+
         const type = allowedTypes[Math.floor(Math.random() * allowedTypes.length)];
-        
+
         const speedMult = currentLevel ? currentLevel.speedMultiplier : 1.0;
         const baseSpeed = (0.016 + Math.min(score * 0.002, 0.015)) * speedMult;
-        
+
         // If type is broken_line, we'll slide horizontally
         const speedVal = type === 'broken_line' ? baseSpeed * 1.6 : baseSpeed;
         const obstacle = {
@@ -1450,7 +1453,7 @@ function createGame(soundEffects, currentLevel, onGameOver, onVictory) {
                 ctx.shadowColor = COLORS[i];
                 ctx.stroke();
             }
-        } 
+        }
         else if (obs.type === 'double_circle') {
             // Inner ring (rotates backwards)
             ctx.lineWidth = obs.thickness - 2;
@@ -1475,7 +1478,7 @@ function createGame(soundEffects, currentLevel, onGameOver, onVictory) {
                 ctx.shadowColor = COLORS[i];
                 ctx.stroke();
             }
-        } 
+        }
         else if (obs.type === 'cross') {
             ctx.lineWidth = obs.thickness;
             for (let i = 0; i < 4; i++) {
@@ -1485,7 +1488,7 @@ function createGame(soundEffects, currentLevel, onGameOver, onVictory) {
                 const startY = cy + Math.sin(angle) * 20;
                 const endX = cx + Math.cos(angle) * obs.radius;
                 const endY = cy + Math.sin(angle) * obs.radius;
-                
+
                 ctx.moveTo(startX, startY);
                 ctx.lineTo(endX, endY);
                 ctx.strokeStyle = COLORS[i];
@@ -1548,15 +1551,15 @@ function createGame(soundEffects, currentLevel, onGameOver, onVictory) {
             // Semi-transparent wind background zone
             ctx.save();
             ctx.fillStyle = 'rgba(0, 240, 255, 0.035)';
-            ctx.fillRect(0, cy - fan.height/2, window.GAME_WIDTH, fan.height);
+            ctx.fillRect(0, cy - fan.height / 2, window.GAME_WIDTH, fan.height);
             ctx.strokeStyle = 'rgba(0, 240, 255, 0.14)';
             ctx.lineWidth = 1.5;
             ctx.setLineDash([4, 12]);
             ctx.beginPath();
-            ctx.moveTo(0, cy - fan.height/2);
-            ctx.lineTo(window.GAME_WIDTH, cy - fan.height/2);
-            ctx.moveTo(0, cy + fan.height/2);
-            ctx.lineTo(window.GAME_WIDTH, cy + fan.height/2);
+            ctx.moveTo(0, cy - fan.height / 2);
+            ctx.lineTo(window.GAME_WIDTH, cy - fan.height / 2);
+            ctx.moveTo(0, cy + fan.height / 2);
+            ctx.lineTo(window.GAME_WIDTH, cy + fan.height / 2);
             ctx.stroke();
             ctx.restore();
 
@@ -1765,11 +1768,11 @@ function createGame(soundEffects, currentLevel, onGameOver, onVictory) {
             const dist = Math.hypot(player.x - sw.x, player.y - sw.y);
             if (dist < player.radius + sw.radius) {
                 sw.active = false;
-                
+
                 // Change player to a random new color different from current
                 const remainingColors = COLORS.filter(c => c !== player.color);
                 player.color = remainingColors[Math.floor(Math.random() * remainingColors.length)];
-                
+
                 soundEffects.playSwitch();
                 spawnExplosion(sw.x, sw.y - cameraY, player.color, 14);
             }
@@ -1791,7 +1794,7 @@ function createGame(soundEffects, currentLevel, onGameOver, onVictory) {
                     // Normalize to [0, 2*PI]
                     let relAngle = (angle - obs.rotation) % (Math.PI * 2);
                     if (relAngle < 0) relAngle += Math.PI * 2;
-                    
+
                     const segIdx = Math.floor(relAngle / (Math.PI / 2)) % 4;
                     const contactColor = COLORS[segIdx];
 
@@ -1804,7 +1807,7 @@ function createGame(soundEffects, currentLevel, onGameOver, onVictory) {
             else if (obs.type === 'double_circle') {
                 const dist = Math.hypot(player.x - obs.x, player.y - obs.y);
                 const halfThick = obs.thickness / 2;
-                
+
                 // Ring 1 (Outer Ring)
                 if (Math.abs(dist - obs.radius) < (player.radius + halfThick)) {
                     const angle = Math.atan2(player.y - obs.y, player.x - obs.x);
@@ -1816,7 +1819,7 @@ function createGame(soundEffects, currentLevel, onGameOver, onVictory) {
                         return;
                     }
                 }
-                
+
                 // Ring 2 (Inner Ring, backward rotation)
                 const rInner = obs.radius - 22;
                 if (Math.abs(dist - rInner) < (player.radius + halfThick)) {
@@ -1841,7 +1844,7 @@ function createGame(soundEffects, currentLevel, onGameOver, onVictory) {
                     // Point-to-segment calculation
                     const relX = player.x - obs.x;
                     const relY = player.y - obs.y;
-                    
+
                     // Project player relative coord on spoke vector
                     let proj = relX * cosA + relY * sinA;
                     // Cap projection length between inner gap (20) and spoke radius
@@ -1849,7 +1852,7 @@ function createGame(soundEffects, currentLevel, onGameOver, onVictory) {
 
                     const closestX = obs.x + proj * cosA;
                     const closestY = obs.y + proj * sinA;
-                    
+
                     const distToSpoke = Math.hypot(player.x - closestX, player.y - closestY);
                     if (distToSpoke < player.radius + halfThick) {
                         if (COLORS[i] !== player.color) {
@@ -1862,12 +1865,12 @@ function createGame(soundEffects, currentLevel, onGameOver, onVictory) {
             else if (obs.type === 'square') {
                 const halfThick = obs.thickness / 2;
                 const size = obs.radius * 1.3;
-                
+
                 // Check each of the 4 line segments of the square
                 for (let i = 0; i < 4; i++) {
                     const a1 = obs.rotation + i * Math.PI / 2;
                     const a2 = obs.rotation + (i + 1) * Math.PI / 2;
-                    
+
                     const x1 = obs.x + Math.cos(a1) * size;
                     const y1 = obs.y + Math.sin(a1) * size;
                     const x2 = obs.x + Math.cos(a2) * size;
@@ -1921,7 +1924,7 @@ function createGame(soundEffects, currentLevel, onGameOver, onVictory) {
             const obs = obstacles[i];
             if (obs.y - cameraY > window.GAME_HEIGHT + 150) {
                 obstacles.splice(i, 1);
-                
+
                 // Clear corresponding star & switcher
                 const idxStar = collectables.findIndex(s => s.id === obs.id);
                 if (idxStar !== -1) collectables.splice(idxStar, 1);
@@ -1937,12 +1940,12 @@ function createGame(soundEffects, currentLevel, onGameOver, onVictory) {
     // Termination
     function triggerGameOver() {
         if (!isPlaying) return;
-        
+
         if (currentLevel && lives > 0) {
             isPaused = true;
             soundEffects.playGameOver();
             spawnExplosion(player.x, player.y - cameraY, player.color, 24);
-            
+
             // Prepare Continue Modal
             modalLivesCount.textContent = lives;
             modalContinueBtn.style.display = 'block';
@@ -1950,11 +1953,11 @@ function createGame(soundEffects, currentLevel, onGameOver, onVictory) {
             continueModal.style.display = 'flex';
             return;
         }
-        
+
         isPlaying = false;
         soundEffects.playGameOver();
         spawnExplosion(player.x, player.y - cameraY, player.color, 30);
-        
+
         // Wait a small moment for explosion effect to draw before changing state
         setTimeout(() => {
             if (animationId) cancelAnimationFrame(animationId);
@@ -1966,7 +1969,7 @@ function createGame(soundEffects, currentLevel, onGameOver, onVictory) {
         if (!isPlaying) return;
         isPlaying = false;
         soundEffects.playSwitch();
-        
+
         // Spawn sequential beautiful neon explosions of victory!
         for (let i = 0; i < 3; i++) {
             setTimeout(() => {
@@ -1990,7 +1993,7 @@ function createGame(soundEffects, currentLevel, onGameOver, onVictory) {
             const levelIdx = Math.min(Math.max(0, currentLevel.id - 1), BG_PALETTES.length - 1);
             const progress = Math.min(score / currentLevel.targetScore, 1.0);
             const nextIdx = Math.min(levelIdx + 1, BG_PALETTES.length - 1);
-            
+
             const col1 = BG_PALETTES[levelIdx];
             const col2 = BG_PALETTES[nextIdx];
             targetBgColor = [
@@ -2111,12 +2114,12 @@ function createGame(soundEffects, currentLevel, onGameOver, onVictory) {
                 fan.bladeAngle += 0.12;
             }
             for (let fan of fans) {
-                if (player.y > fan.y - fan.height/2 && player.y < fan.y + fan.height/2) {
+                if (player.y > fan.y - fan.height / 2 && player.y < fan.y + fan.height / 2) {
                     player.vy += fan.strength; // push downwards
                     if (Math.random() < 0.28) {
                         particles.push({
                             x: Math.random() * window.GAME_WIDTH,
-                            y: fan.y - fan.height/2,
+                            y: fan.y - fan.height / 2,
                             vx: (Math.random() - 0.5) * 0.5,
                             vy: 4 + Math.random() * 3,
                             color: 'rgba(0, 240, 255, 0.45)',
@@ -2185,8 +2188,8 @@ function createGame(soundEffects, currentLevel, onGameOver, onVictory) {
             // Platform Update & Collision
             if (respawnPlatform) {
                 // Keep player on the platform if they are falling/touching it
-                if (player.y + player.radius >= respawnPlatform.y - 4 && 
-                    player.y - player.radius <= respawnPlatform.y + respawnPlatform.height && 
+                if (player.y + player.radius >= respawnPlatform.y - 4 &&
+                    player.y - player.radius <= respawnPlatform.y + respawnPlatform.height &&
                     player.vy >= 0) {
                     player.y = respawnPlatform.y - player.radius;
                     player.vy = 0;
@@ -2210,7 +2213,7 @@ function createGame(soundEffects, currentLevel, onGameOver, onVictory) {
                 } else if (activeSkin === 'chrono_pulsar') {
                     trailRadius = player.radius * 0.35;
                 }
-                
+
                 particles.push({
                     x: player.x + (Math.random() - 0.5) * 6,
                     y: player.y + (Math.random() - 0.5) * 6,
@@ -2439,11 +2442,11 @@ function createGame(soundEffects, currentLevel, onGameOver, onVictory) {
             modalContinueBtn.removeEventListener('click', onContinueClick);
             modalNewGameBtn.removeEventListener('click', onNewGameClick);
             modalQuitBtn.removeEventListener('click', onQuitClick);
-            
+
             pauseBtn.removeEventListener('click', onPauseBtnClick);
             modalResumeBtn.removeEventListener('click', onResumeBtnClick);
             modalPauseQuitBtn.removeEventListener('click', onPauseQuitBtnClick);
-            
+
             if (animationId) cancelAnimationFrame(animationId);
             window.removeEventListener('resize', resizeCanvas);
             window.removeEventListener('touchstart', handleTap);
