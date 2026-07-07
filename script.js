@@ -306,6 +306,28 @@ const LEVELS = [
         isBalance: true,
         isRain: true,
         hasFans: true
+    },
+    {
+        id: 21,
+        name: "Fan Resistance",
+        description: "Side-by-side fans create resistance walls — TAP FASTER to push through!",
+        targetScore: 20,
+        types: ['circle', 'square'],
+        speedMultiplier: 1.3,
+        hasFans: true,
+        hasSideBySideFans: true
+    },
+    {
+        id: 22,
+        name: "Ultimate Gauntlet",
+        description: "All challenges combined: fans, balance, rain, sliding lines. Survive!",
+        targetScore: 30,
+        types: ['circle', 'square', 'double_circle', 'broken_line'],
+        speedMultiplier: 1.6,
+        isBalance: true,
+        isRain: true,
+        hasFans: true,
+        hasSideBySideFans: true
     }
 ];
 
@@ -859,6 +881,8 @@ function createGame(soundEffects, currentLevel, onGameOver, onVictory) {
     const fans = [];           // active downward wind zones
     const rainingBalls = [];   // falling colored balls
     let rainSpawnTimer = 0;    // countdown frames to next rain ball
+    let isSideBySideFanActive = false; // Whether side-by-side fan resistance is active
+    let fanResistanceBannerShown = false; // Track if we showed fan resistance banner
 
     // Beautiful Floating Challenge Banners
     let challengeBannerText = "";
@@ -1215,7 +1239,7 @@ function createGame(soundEffects, currentLevel, onGameOver, onVictory) {
         window.GAME_HEIGHT = window.innerHeight || 640;
 
         const isMobile = window.GAME_WIDTH <= 768 || ('ontouchstart' in window) || navigator.maxTouchPoints > 0;
-        
+
         // Optimizing DPR on mobile: using full DPR + shadowBlur causes massive lag.
         // A dpr of 1 gives smooth 60fps while allowing us to keep full neon glow (SHADOW_MULT = 1).
         const dpr = isMobile ? 1 : Math.min(window.devicePixelRatio || 1, 2);
@@ -1329,7 +1353,7 @@ function createGame(soundEffects, currentLevel, onGameOver, onVictory) {
         const speedMult = currentLevel ? currentLevel.speedMultiplier : 1.0;
         const baseSpeed = (0.016 + Math.min(score * 0.002, 0.015)) * speedMult;
 
-        // If type is broken_line, we'll slide horizontally
+        // broken_line: give it oscillation phase + slide speed
         const speedVal = type === 'broken_line' ? baseSpeed * 1.6 : baseSpeed;
         const obstacle = {
             id: Date.now() + Math.random(),
@@ -1339,7 +1363,11 @@ function createGame(soundEffects, currentLevel, onGameOver, onVictory) {
             radius: 84,
             rotation: Math.random() * Math.PI * 2,
             speed: speedVal * (Math.random() > 0.5 ? 1 : -1),
-            thickness: type === 'broken_line' ? 16 : 14
+            thickness: type === 'broken_line' ? 16 : 14,
+            // Broken line oscillation: shifts left-right sinusoidally
+            oscPhase: Math.random() * Math.PI * 2,
+            oscSpeed: (0.018 + Math.random() * 0.012) * (Math.random() > 0.5 ? 1 : -1),
+            oscAmplitude: 55 + Math.random() * 40
         };
 
         obstacles.push(obstacle);
@@ -1365,25 +1393,56 @@ function createGame(soundEffects, currentLevel, onGameOver, onVictory) {
             rotation: 0
         });
 
-        // Spawn Side-by-Side fans in wind mode
+        // Determine if wind (fans) should spawn
         let isWindActiveThisTime = false;
+        let spawnSideBySide = false;
+
         if (currentLevel) {
             if (currentLevel.hasFans) isWindActiveThisTime = true;
+            if (currentLevel.hasSideBySideFans) spawnSideBySide = Math.random() > 0.45;
         } else {
             if (score >= 8 && score < 16) isWindActiveThisTime = true;
+            else if (score >= 20 && score < 28) { isWindActiveThisTime = true; spawnSideBySide = Math.random() > 0.5; }
             else if (score >= 45) {
                 const cycleIdx = Math.floor((score - 45) / 5) % 4;
-                if (cycleIdx === 0) isWindActiveThisTime = true;
+                if (cycleIdx === 0) { isWindActiveThisTime = true; spawnSideBySide = Math.random() > 0.4; }
             }
         }
 
         if (isWindActiveThisTime) {
-            fans.push({
-                y: spawnY + spacing / 2 + 50,
-                height: 160,
-                strength: 0.18,
-                bladeAngle: Math.random() * Math.PI * 2
-            });
+            const fanY = spawnY + spacing / 2 + 50;
+            if (spawnSideBySide) {
+                // Side-by-side fans: two fan zones at same y level
+                // Left fan
+                fans.push({
+                    y: fanY,
+                    height: 180,
+                    strength: 0.22,
+                    bladeAngle: Math.random() * Math.PI * 2,
+                    side: 'left',        // left side fan
+                    isSideBySide: true,
+                    resistanceY: fanY    // y coordinate of resistance zone center
+                });
+                // Right fan
+                fans.push({
+                    y: fanY,
+                    height: 180,
+                    strength: 0.22,
+                    bladeAngle: Math.random() * Math.PI * 2,
+                    side: 'right',       // right side fan
+                    isSideBySide: true,
+                    resistanceY: fanY
+                });
+            } else {
+                fans.push({
+                    y: fanY,
+                    height: 160,
+                    strength: 0.18,
+                    bladeAngle: Math.random() * Math.PI * 2,
+                    side: 'both',
+                    isSideBySide: false
+                });
+            }
         }
     }
 
@@ -1522,12 +1581,14 @@ function createGame(soundEffects, currentLevel, onGameOver, onVictory) {
             ctx.lineWidth = obs.thickness;
             const segmentWidth = 110;
             const totalWidth = segmentWidth * 4;
-            // Compute slide center continuously wrapping around
+            // Slide: rotation-based horizontal scroll
             const slideX = (obs.rotation * 150) % totalWidth;
+            // Oscillation: sinusoidal left/right shift
+            const oscOff = obs.oscOffset || 0;
 
             // Draw multiple copies side-by-side to ensure full horizontal wrapping
             for (let copy = -1; copy <= 1; copy++) {
-                const baseStartX = cx + slideX + copy * totalWidth - totalWidth / 2;
+                const baseStartX = cx + slideX + oscOff + copy * totalWidth - totalWidth / 2;
                 for (let i = 0; i < 4; i++) {
                     ctx.beginPath();
                     ctx.moveTo(baseStartX + i * segmentWidth, cy);
@@ -1544,41 +1605,97 @@ function createGame(soundEffects, currentLevel, onGameOver, onVictory) {
     }
 
     function drawFans() {
+        // Track which y levels are "side-by-side" to avoid drawing the zone rectangle twice
+        const drawnSideBySideY = new Set();
+
         for (let fan of fans) {
             const cy = fan.y - cameraY;
-            if (cy < -150 || cy > window.GAME_HEIGHT + 150) continue;
+            if (cy < -200 || cy > window.GAME_HEIGHT + 200) continue;
 
-            // Semi-transparent wind background zone
-            ctx.save();
-            ctx.fillStyle = 'rgba(0, 240, 255, 0.035)';
-            ctx.fillRect(0, cy - fan.height / 2, window.GAME_WIDTH, fan.height);
-            ctx.strokeStyle = 'rgba(0, 240, 255, 0.14)';
-            ctx.lineWidth = 1.5;
-            ctx.setLineDash([4, 12]);
-            ctx.beginPath();
-            ctx.moveTo(0, cy - fan.height / 2);
-            ctx.lineTo(window.GAME_WIDTH, cy - fan.height / 2);
-            ctx.moveTo(0, cy + fan.height / 2);
-            ctx.lineTo(window.GAME_WIDTH, cy + fan.height / 2);
-            ctx.stroke();
-            ctx.restore();
+            if (fan.isSideBySide) {
+                // Draw the resistance zone only once per y level
+                const yKey = Math.round(fan.y);
+                if (!drawnSideBySideY.has(yKey)) {
+                    drawnSideBySideY.add(yKey);
 
-            // Draw Left/Right housing fan blade widgets
-            drawFanBladeWidget(15, cy, fan.bladeAngle);
-            drawFanBladeWidget(window.GAME_WIDTH - 15, cy, -fan.bladeAngle);
+                    // Pulsing danger background for resistance zone
+                    const pulse = 0.04 + 0.025 * Math.abs(Math.sin(Date.now() / 280));
+                    ctx.save();
+                    ctx.fillStyle = `rgba(255, 80, 0, ${pulse})`;
+                    ctx.fillRect(0, cy - fan.height / 2, window.GAME_WIDTH, fan.height);
+
+                    // Glowing border lines
+                    ctx.strokeStyle = 'rgba(255, 120, 0, 0.55)';
+                    ctx.lineWidth = 2;
+                    ctx.setLineDash([5, 9]);
+                    ctx.shadowBlur = 8 * (window.SHADOW_MULT !== undefined ? window.SHADOW_MULT : 1);
+                    ctx.shadowColor = 'rgba(255, 100, 0, 0.7)';
+                    ctx.beginPath();
+                    ctx.moveTo(0, cy - fan.height / 2);
+                    ctx.lineTo(window.GAME_WIDTH, cy - fan.height / 2);
+                    ctx.moveTo(0, cy + fan.height / 2);
+                    ctx.lineTo(window.GAME_WIDTH, cy + fan.height / 2);
+                    ctx.stroke();
+
+                    // "TAP FASTER" label in the resistance zone
+                    ctx.setLineDash([]);
+                    ctx.shadowBlur = 0;
+                    const labelAlpha = 0.5 + 0.4 * Math.abs(Math.sin(Date.now() / 200));
+                    ctx.globalAlpha = labelAlpha;
+                    ctx.fillStyle = '#ff7a00';
+                    ctx.font = 'bold 12px sans-serif';
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    ctx.shadowBlur = 8 * (window.SHADOW_MULT !== undefined ? window.SHADOW_MULT : 1);
+                    ctx.shadowColor = '#ff7a00';
+                    ctx.fillText('⚡ TAP FASTER — FAN RESISTANCE! ⚡', window.GAME_WIDTH / 2, cy);
+                    ctx.restore();
+
+                    // Downward wind particle streams from both sides
+                    if (Math.random() < 0.35) {
+                        particles.push({ x: 20 + Math.random() * 40, y: fan.y - fan.height / 2, vx: 0.5 + Math.random(), vy: 3 + Math.random() * 2, color: 'rgba(255,120,0,0.5)', radius: 1.5 + Math.random(), alpha: 0.7, decay: 0.025 });
+                        particles.push({ x: window.GAME_WIDTH - 20 - Math.random() * 40, y: fan.y - fan.height / 2, vx: -(0.5 + Math.random()), vy: 3 + Math.random() * 2, color: 'rgba(255,120,0,0.5)', radius: 1.5 + Math.random(), alpha: 0.7, decay: 0.025 });
+                    }
+                }
+
+                // Draw the fan widget on appropriate side
+                if (fan.side === 'left') {
+                    drawFanBladeWidget(20, cy, fan.bladeAngle, true);
+                } else if (fan.side === 'right') {
+                    drawFanBladeWidget(window.GAME_WIDTH - 20, cy, -fan.bladeAngle, true);
+                }
+            } else {
+                // Standard full-width fan zone
+                ctx.save();
+                ctx.fillStyle = 'rgba(0, 240, 255, 0.035)';
+                ctx.fillRect(0, cy - fan.height / 2, window.GAME_WIDTH, fan.height);
+                ctx.strokeStyle = 'rgba(0, 240, 255, 0.14)';
+                ctx.lineWidth = 1.5;
+                ctx.setLineDash([4, 12]);
+                ctx.beginPath();
+                ctx.moveTo(0, cy - fan.height / 2);
+                ctx.lineTo(window.GAME_WIDTH, cy - fan.height / 2);
+                ctx.moveTo(0, cy + fan.height / 2);
+                ctx.lineTo(window.GAME_WIDTH, cy + fan.height / 2);
+                ctx.stroke();
+                ctx.restore();
+
+                drawFanBladeWidget(15, cy, fan.bladeAngle, false);
+                drawFanBladeWidget(window.GAME_WIDTH - 15, cy, -fan.bladeAngle, false);
+            }
         }
     }
 
-    function drawFanBladeWidget(cx, cy, angle) {
+    function drawFanBladeWidget(cx, cy, angle, isResistance) {
         ctx.save();
         ctx.beginPath();
-        ctx.arc(cx, cy, 18, 0, Math.PI * 2);
+        ctx.arc(cx, cy, isResistance ? 22 : 18, 0, Math.PI * 2);
         ctx.fillStyle = '#14141c';
         ctx.fill();
-        ctx.lineWidth = 2;
-        ctx.strokeStyle = '#00f0ff';
-        ctx.shadowBlur = (8) * (window.SHADOW_MULT !== undefined ? window.SHADOW_MULT : 1);
-        ctx.shadowColor = '#00f0ff';
+        ctx.lineWidth = isResistance ? 2.5 : 2;
+        ctx.strokeStyle = isResistance ? '#ff7a00' : '#00f0ff';
+        ctx.shadowBlur = (isResistance ? 14 : 8) * (window.SHADOW_MULT !== undefined ? window.SHADOW_MULT : 1);
+        ctx.shadowColor = isResistance ? '#ff7a00' : '#00f0ff';
         ctx.stroke();
 
         ctx.translate(cx, cy);
@@ -1586,8 +1703,8 @@ function createGame(soundEffects, currentLevel, onGameOver, onVictory) {
         for (let i = 0; i < 3; i++) {
             ctx.beginPath();
             ctx.rotate((Math.PI * 2) / 3);
-            ctx.ellipse(0, -8, 3.5, 8, 0, 0, Math.PI * 2);
-            ctx.fillStyle = '#8e9eab';
+            ctx.ellipse(0, isResistance ? -10 : -8, isResistance ? 4.5 : 3.5, isResistance ? 10 : 8, 0, 0, Math.PI * 2);
+            ctx.fillStyle = isResistance ? '#ff9333' : '#8e9eab';
             ctx.fill();
         }
         ctx.restore();
@@ -1595,13 +1712,36 @@ function createGame(soundEffects, currentLevel, onGameOver, onVictory) {
 
     function drawRainingBalls() {
         for (let b of rainingBalls) {
+            const bcy = b.y - cameraY;
             ctx.save();
+
+            // Outer glow ring
             ctx.beginPath();
-            ctx.arc(b.x, b.y - cameraY, b.radius, 0, Math.PI * 2);
+            ctx.arc(b.x, bcy, b.radius + 5, 0, Math.PI * 2);
+            ctx.strokeStyle = b.color;
+            ctx.lineWidth = 2;
+            ctx.globalAlpha = 0.35;
+            ctx.shadowBlur = (14) * (window.SHADOW_MULT !== undefined ? window.SHADOW_MULT : 1);
+            ctx.shadowColor = b.color;
+            ctx.stroke();
+            ctx.globalAlpha = 1;
+
+            // Main ball
+            ctx.beginPath();
+            ctx.arc(b.x, bcy, b.radius, 0, Math.PI * 2);
             ctx.fillStyle = b.color;
-            ctx.shadowBlur = (10) * (window.SHADOW_MULT !== undefined ? window.SHADOW_MULT : 1);
+            ctx.shadowBlur = (12) * (window.SHADOW_MULT !== undefined ? window.SHADOW_MULT : 1);
             ctx.shadowColor = b.color;
             ctx.fill();
+
+            // "SWAP" hint label on each ball
+            ctx.shadowBlur = 0;
+            ctx.fillStyle = '#ffffff';
+            ctx.font = 'bold 7px sans-serif';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.globalAlpha = 0.9;
+            ctx.fillText('↓', b.x, bcy);
             ctx.restore();
         }
     }
@@ -1610,18 +1750,56 @@ function createGame(soundEffects, currentLevel, onGameOver, onVictory) {
         if (!isBalanceActive) return;
 
         ctx.save();
-        // Dotted midline
+
+        // === Left tap zone indicator ===
+        const zoneAlpha = 0.12 + 0.06 * Math.abs(Math.sin(Date.now() / 450));
+        ctx.fillStyle = `rgba(0, 240, 255, ${zoneAlpha})`;
+        ctx.fillRect(0, 0, window.GAME_WIDTH * 0.3, window.GAME_HEIGHT);
+
+        // Left arrow pulse
+        const arrowPulse = 0.6 + 0.35 * Math.abs(Math.sin(Date.now() / 380));
+        ctx.globalAlpha = arrowPulse;
+        ctx.fillStyle = '#00f0ff';
+        ctx.shadowBlur = 12 * (window.SHADOW_MULT !== undefined ? window.SHADOW_MULT : 1);
+        ctx.shadowColor = '#00f0ff';
+        ctx.font = 'bold 26px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('◀', window.GAME_WIDTH * 0.12, window.GAME_HEIGHT * 0.5);
+        ctx.font = 'bold 9px sans-serif';
+        ctx.fillText('TAP LEFT', window.GAME_WIDTH * 0.12, window.GAME_HEIGHT * 0.5 + 26);
+        ctx.globalAlpha = 1;
+        ctx.shadowBlur = 0;
+
+        // === Right tap zone indicator ===
+        ctx.fillStyle = `rgba(255, 0, 127, ${zoneAlpha})`;
+        ctx.fillRect(window.GAME_WIDTH * 0.7, 0, window.GAME_WIDTH * 0.3, window.GAME_HEIGHT);
+
+        ctx.globalAlpha = arrowPulse;
+        ctx.fillStyle = '#ff007f';
+        ctx.shadowBlur = 12 * (window.SHADOW_MULT !== undefined ? window.SHADOW_MULT : 1);
+        ctx.shadowColor = '#ff007f';
+        ctx.font = 'bold 26px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('▶', window.GAME_WIDTH * 0.88, window.GAME_HEIGHT * 0.5);
+        ctx.font = 'bold 9px sans-serif';
+        ctx.fillText('TAP RIGHT', window.GAME_WIDTH * 0.88, window.GAME_HEIGHT * 0.5 + 26);
+        ctx.globalAlpha = 1;
+        ctx.shadowBlur = 0;
+
+        // === Dotted midline ===
         ctx.setLineDash([6, 12]);
-        ctx.strokeStyle = 'rgba(255, 255, 255, 0.12)';
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.18)';
         ctx.lineWidth = 2;
         ctx.beginPath();
         ctx.moveTo(window.GAME_WIDTH / 2, 0);
         ctx.lineTo(window.GAME_WIDTH / 2, window.GAME_HEIGHT);
         ctx.stroke();
+        ctx.setLineDash([]);
 
         // Horizontal slider track
         const barY = 92;
-        const barW = 150;
+        const barW = 160;
         const barX = window.GAME_WIDTH / 2 - barW / 2;
 
         ctx.fillStyle = 'rgba(255, 255, 255, 0.15)';
@@ -1629,33 +1807,39 @@ function createGame(soundEffects, currentLevel, onGameOver, onVictory) {
 
         // Center notch
         ctx.fillStyle = '#ffffff';
-        ctx.fillRect(window.GAME_WIDTH / 2 - 1.5, barY - 6, 3, 12);
+        ctx.fillRect(window.GAME_WIDTH / 2 - 1.5, barY - 7, 3, 14);
 
-        // Balance marker
+        // Balance marker (color shifts to red the further off-center)
         const maxDev = window.GAME_WIDTH / 2;
         const deviation = player.x - window.GAME_WIDTH / 2;
+        const deviationRatio = Math.abs(deviation) / maxDev;
         const markerX = window.GAME_WIDTH / 2 + (deviation / maxDev) * (barW / 2);
+        const markerColor = deviationRatio > 0.68 ? '#ff007f' : player.color;
 
         ctx.beginPath();
-        ctx.arc(markerX, barY, 6.5, 0, Math.PI * 2);
-        ctx.fillStyle = player.color;
-        ctx.shadowBlur = (8) * (window.SHADOW_MULT !== undefined ? window.SHADOW_MULT : 1);
-        ctx.shadowColor = player.color;
+        ctx.arc(markerX, barY, 7, 0, Math.PI * 2);
+        ctx.fillStyle = markerColor;
+        ctx.shadowBlur = (10) * (window.SHADOW_MULT !== undefined ? window.SHADOW_MULT : 1);
+        ctx.shadowColor = markerColor;
         ctx.fill();
 
         // Warnings and labels
-        if (Math.abs(deviation) > maxDev * 0.68) {
+        if (deviationRatio > 0.68) {
+            const warnAlpha = 0.7 + 0.3 * Math.abs(Math.sin(Date.now() / 130));
+            ctx.globalAlpha = warnAlpha;
             ctx.fillStyle = '#ff007f';
             ctx.font = 'bold 11px sans-serif';
             ctx.textAlign = 'center';
-            ctx.shadowBlur = (6) * (window.SHADOW_MULT !== undefined ? window.SHADOW_MULT : 1);
+            ctx.shadowBlur = (8) * (window.SHADOW_MULT !== undefined ? window.SHADOW_MULT : 1);
             ctx.shadowColor = '#ff007f';
-            ctx.fillText("âš ï¸ CRITICAL BALANCE! âš ï¸", window.GAME_WIDTH / 2, barY + 20);
+            ctx.fillText('⚠ REBALANCE — TAP OTHER SIDE! ⚠', window.GAME_WIDTH / 2, barY + 22);
+            ctx.globalAlpha = 1;
         } else {
-            ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.65)';
             ctx.font = 'bold 9px sans-serif';
             ctx.textAlign = 'center';
-            ctx.fillText("BALANCE BALANCE", window.GAME_WIDTH / 2, barY + 16);
+            ctx.shadowBlur = 0;
+            ctx.fillText('USE BOTH SIDES TO BALANCE', window.GAME_WIDTH / 2, barY + 17);
         }
         ctx.restore();
     }
@@ -1663,21 +1847,52 @@ function createGame(soundEffects, currentLevel, onGameOver, onVictory) {
     function drawSwapButton() {
         if (!isRainActive) return;
         ctx.save();
+
+        // Pulsing glow ring around SWAP button
+        const swapPulse = 0.4 + 0.4 * Math.abs(Math.sin(Date.now() / 320));
+        const btnX = window.GAME_WIDTH - 65;
+        const btnY = window.GAME_HEIGHT - 85;
+
         ctx.beginPath();
-        ctx.arc(window.GAME_WIDTH - 65, window.GAME_HEIGHT - 75, 25, 0, Math.PI * 2);
-        ctx.fillStyle = 'rgba(20, 20, 30, 0.85)';
+        ctx.arc(btnX, btnY, 34, 0, Math.PI * 2);
+        ctx.strokeStyle = '#ffea00';
+        ctx.lineWidth = 2;
+        ctx.globalAlpha = swapPulse * 0.6;
+        ctx.shadowBlur = 18 * (window.SHADOW_MULT !== undefined ? window.SHADOW_MULT : 1);
+        ctx.shadowColor = '#ffea00';
+        ctx.stroke();
+        ctx.globalAlpha = 1;
+        ctx.shadowBlur = 0;
+
+        // Main button circle
+        ctx.beginPath();
+        ctx.arc(btnX, btnY, 28, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(20, 20, 30, 0.9)';
         ctx.fill();
         ctx.lineWidth = 2.5;
         ctx.strokeStyle = '#ffea00';
-        ctx.shadowBlur = (10) * (window.SHADOW_MULT !== undefined ? window.SHADOW_MULT : 1);
+        ctx.shadowBlur = (12) * (window.SHADOW_MULT !== undefined ? window.SHADOW_MULT : 1);
         ctx.shadowColor = '#ffea00';
         ctx.stroke();
 
+        // SWAP label
         ctx.fillStyle = '#ffea00';
-        ctx.font = 'bold 11px sans-serif';
+        ctx.font = 'bold 10px sans-serif';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        ctx.fillText("SWAP", window.GAME_WIDTH - 65, window.GAME_HEIGHT - 75);
+        ctx.shadowBlur = 6 * (window.SHADOW_MULT !== undefined ? window.SHADOW_MULT : 1);
+        ctx.fillText('SWAP', btnX, btnY - 6);
+        ctx.font = '8px sans-serif';
+        ctx.fillStyle = 'rgba(255,234,0,0.7)';
+        ctx.fillText('COLOR', btnX, btnY + 7);
+
+        // "Match balls" hint above button
+        ctx.globalAlpha = 0.55 + 0.35 * Math.abs(Math.sin(Date.now() / 500));
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold 7.5px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.shadowBlur = 0;
+        ctx.fillText('MATCH BALL COLOR!', btnX, btnY - 40);
         ctx.restore();
     }
 
@@ -1903,8 +2118,9 @@ function createGame(soundEffects, currentLevel, onGameOver, onVictory) {
                 if (distY < player.radius + halfThick) {
                     const segmentWidth = 110;
                     const totalWidth = segmentWidth * 4;
-                    // Compute pattern coordinate of player relative to the sliding line
-                    const patternX = ((player.x - obs.x - (obs.rotation * 150)) % totalWidth + totalWidth) % totalWidth;
+                    // Compute pattern coordinate of player relative to the sliding+oscillating line
+                    const oscOff = obs.oscOffset || 0;
+                    const patternX = ((player.x - obs.x - (obs.rotation * 150) - oscOff) % totalWidth + totalWidth) % totalWidth;
                     const segIdx = Math.floor(patternX / segmentWidth) % 4;
                     const contactColor = COLORS[segIdx];
 
@@ -2062,48 +2278,62 @@ function createGame(soundEffects, currentLevel, onGameOver, onVictory) {
             // --- Update Active Challenges/Modes dynamically ---
             let currentMode = 'normal';
             if (!currentLevel) {
-                if (score >= 8 && score < 16) {
+                if (score >= 8 && score < 20) {
                     currentMode = 'wind';
-                } else if (score >= 16 && score < 25) {
+                } else if (score >= 20 && score < 28) {
+                    currentMode = 'wind_resistance'; // side-by-side fan resistance
+                } else if (score >= 28 && score < 38) {
                     currentMode = 'balance';
-                } else if (score >= 25 && score < 35) {
+                } else if (score >= 38 && score < 48) {
                     currentMode = 'rain';
-                } else if (score >= 35 && score < 45) {
+                } else if (score >= 48 && score < 58) {
                     currentMode = 'broken_line';
-                } else if (score >= 45) {
-                    const modes = ['wind', 'balance', 'rain', 'broken_line'];
-                    const cycleIdx = Math.floor((score - 45) / 5) % modes.length;
+                } else if (score >= 58) {
+                    const modes = ['wind_resistance', 'balance', 'rain', 'broken_line'];
+                    const cycleIdx = Math.floor((score - 58) / 5) % modes.length;
                     currentMode = modes[cycleIdx];
                 }
             } else {
                 if (currentLevel.isBalance) currentMode = 'balance';
                 else if (currentLevel.isRain) currentMode = 'rain';
+                else if (currentLevel.hasSideBySideFans) currentMode = 'wind_resistance';
                 else if (currentLevel.hasFans) currentMode = 'wind';
             }
 
             const prevBalance = isBalanceActive;
             const prevRain = isRainActive;
+            const prevSideBySide = isSideBySideFanActive;
 
             isBalanceActive = (currentMode === 'balance');
             isRainActive = (currentMode === 'rain');
+            isSideBySideFanActive = (currentMode === 'wind_resistance');
 
             if (isBalanceActive && !prevBalance) {
-                showChallengeBanner("BALANCE CHALLENGE", "USE LEFT / RIGHT OF SCREEN TO BALANCE BALL!");
+                showChallengeBanner('⚖ BALANCE CHALLENGE', 'USE BOTH LEFT & RIGHT SIDES TO BALANCE THE BALL!');
             }
             if (isRainActive && !prevRain) {
-                showChallengeBanner("COLOR SHOWER", "TAP FLOATING 'SWAP' BUTTON TO MATCH COLORS!");
+                showChallengeBanner('🌈 COLOR SHOWER', 'TAP SWAP BUTTON TO MATCH FALLING BALL COLORS!');
+            }
+            if (isSideBySideFanActive && !prevSideBySide) {
+                showChallengeBanner('⚡ FAN RESISTANCE ZONE', 'SIDE-BY-SIDE FANS RESIST YOU — TAP FASTER TO PUSH THROUGH!');
+                fanResistanceBannerShown = true;
             }
             if (score === 0 && !challengeBannerText && challengeBannerTimer === 0) {
                 if (currentLevel) {
                     showChallengeBanner(currentLevel.name.toUpperCase(), currentLevel.description.toUpperCase());
                 } else {
-                    showChallengeBanner("FREE PLAY", "ASCEND AS HIGH AS YOU CAN!");
+                    showChallengeBanner('FREE PLAY', 'ASCEND AS HIGH AS YOU CAN!');
                 }
             }
 
             // Update Entity rotations
             for (let obs of obstacles) {
                 obs.rotation += obs.speed;
+                // Oscillate broken_line obstacles left and right
+                if (obs.type === 'broken_line') {
+                    obs.oscPhase = (obs.oscPhase || 0) + (obs.oscSpeed || 0.022);
+                    obs.oscOffset = Math.sin(obs.oscPhase) * (obs.oscAmplitude || 60);
+                }
             }
             for (let sw of switchers) {
                 sw.rotation += 0.015;
@@ -2111,19 +2341,34 @@ function createGame(soundEffects, currentLevel, onGameOver, onVictory) {
 
             // Update Fans & Wind physics
             for (let fan of fans) {
-                fan.bladeAngle += 0.12;
+                fan.bladeAngle += fan.isSideBySide ? 0.22 : 0.12; // side-by-side fans spin faster
             }
             for (let fan of fans) {
                 if (player.y > fan.y - fan.height / 2 && player.y < fan.y + fan.height / 2) {
-                    player.vy += fan.strength; // push downwards
-                    if (Math.random() < 0.28) {
+                    // Side-by-side fans have stronger resistance at center
+                    const baseStrength = fan.strength;
+                    let appliedStrength = baseStrength;
+                    if (fan.isSideBySide) {
+                        // Extra resistance near the vertical center of the zone
+                        const distFromCenter = Math.abs(player.y - fan.y);
+                        const centerBonus = Math.max(0, 1 - distFromCenter / (fan.height / 2)) * 0.28;
+                        appliedStrength = baseStrength + centerBonus;
+                    }
+                    player.vy += appliedStrength;
+
+                    // Wind particles: orange for side-by-side, cyan for normal
+                    if (Math.random() < 0.3) {
                         particles.push({
-                            x: Math.random() * window.GAME_WIDTH,
+                            x: fan.side === 'left' ? 10 + Math.random() * 60 :
+                               fan.side === 'right' ? window.GAME_WIDTH - 70 + Math.random() * 60 :
+                               Math.random() * window.GAME_WIDTH,
                             y: fan.y - fan.height / 2,
-                            vx: (Math.random() - 0.5) * 0.5,
-                            vy: 4 + Math.random() * 3,
-                            color: 'rgba(0, 240, 255, 0.45)',
-                            radius: 1 + Math.random() * 1.5,
+                            vx: fan.side === 'left' ? 0.5 + Math.random() * 1.5 :
+                                fan.side === 'right' ? -(0.5 + Math.random() * 1.5) :
+                                (Math.random() - 0.5) * 0.5,
+                            vy: 3.5 + Math.random() * 2.5,
+                            color: fan.isSideBySide ? 'rgba(255, 130, 0, 0.5)' : 'rgba(0, 240, 255, 0.45)',
+                            radius: 1 + Math.random() * 2,
                             alpha: 0.8,
                             decay: 0.02
                         });
@@ -2132,7 +2377,7 @@ function createGame(soundEffects, currentLevel, onGameOver, onVictory) {
             }
             // Recycle fans
             for (let i = fans.length - 1; i >= 0; i--) {
-                if (fans[i].y - cameraY > window.GAME_HEIGHT + 150) {
+                if (fans[i].y - cameraY > window.GAME_HEIGHT + 200) {
                     fans.splice(i, 1);
                 }
             }
@@ -2358,8 +2603,8 @@ function createGame(soundEffects, currentLevel, onGameOver, onVictory) {
                 const relativeY = tapY - rect.top;
 
                 const btnX = window.GAME_WIDTH - 65;
-                const btnY = window.GAME_HEIGHT - 75;
-                const btnR = 35; // tap buffer
+                const btnY = window.GAME_HEIGHT - 85; // matches drawSwapButton position
+                const btnR = 40; // generous tap buffer
 
                 const distToBtn = Math.hypot(relativeX - btnX, relativeY - btnY);
                 if (distToBtn < btnR) {
