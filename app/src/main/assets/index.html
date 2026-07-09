@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Keleme</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- Splash Screen -->
+    <div id="splash-screen" class="screen active">
+        <div class="splash-content">
+            <h2 class="splash-title">AXUMIT STUDIOS</h2>
+            <!-- Glowing Logo Placeholder -->
+            <div class="logo-placeholder">
+                <svg width="100" height="100" viewBox="0 0 100 100" class="neon-logo">
+                    <!-- Overlapping glowing triangles or geometric patterns representing color/light -->
+                    <polygon points="50,15 15,85 85,85" class="logo-polygon logo-cyan" />
+                    <polygon points="50,25 25,80 75,80" class="logo-polygon logo-magenta" />
+                    <polygon points="50,35 35,75 65,75" class="logo-polygon logo-yellow" />
+                    <circle cx="50" cy="60" r="10" class="logo-core" />
+                </svg>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Menu -->
+    <div id="main-menu" class="screen">
+        <div class="menu-content">
+            <h1 class="game-title">Keleme</h1>
+            <p class="game-description">Let's play with colors</p>
+            
+            <div class="menu-controls">
+                <button id="free-play-btn" class="btn btn-primary" data-tag="free_play_button">FREE PLAY</button>
+                <button id="levels-btn" class="btn btn-primary btn-challenges" data-tag="levels_button">CHALLENGES</button>
+                
+                <div class="sound-toggle-container">
+                    <span class="toggle-label">SOUND</span>
+                    <button id="sound-btn" class="btn btn-toggle" data-tag="sound_toggle">ON</button>
+                </div>
+            </div>
+            
+            <div class="menu-footer">
+                <p>HighScore: <span id="menu-highscore">0</span></p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Levels Screen -->
+    <div id="levels-screen" class="screen">
+        <div class="menu-content select-content">
+            <h2 class="levels-title">CHALLENGES</h2>
+            <div id="levels-list" class="levels-grid">
+                <!-- Dynamically populated in script.js -->
+            </div>
+            <button id="levels-back-btn" class="btn btn-secondary" data-tag="levels_back_button">BACK TO MENU</button>
+        </div>
+    </div>
+
+    <!-- Gameplay Screen -->
+    <div id="game-container" class="screen">
+        <canvas id="game-canvas"></canvas>
+        <div id="score-hud">
+            <div class="score-box">
+                <span class="score-label" style="color: #64748b;">SCORE</span>
+                <span id="current-score">0</span>
+            </div>
+            <div id="lives-hud" class="score-box" style="display: none; align-items: center; justify-content: center;">
+                <span class="score-label" style="color: #64748b; margin-right: 8px;">LIVES</span>
+                <span id="lives-container" style="display: flex; gap: 6px; font-size: 1.2rem; filter: drop-shadow(0 0 5px rgba(255, 0, 127, 0.6));">
+                    <!-- Dynamic Hearts/Stars -->
+                </span>
+            </div>
+            <div id="level-hud" class="score-box" style="align-items: flex-end; display: none;">
+                <span id="level-hud-name" style="color: #64748b;">LEVEL 1</span>
+                <span id="level-hud-target" style="font-size: 1.3rem; color: var(--neon-yellow); text-shadow: 0 0 8px rgba(255, 234, 0, 0.4); font-weight: 900;">TARGET: 5</span>
+            </div>
+        </div>
+
+        <!-- Continue Modal Popup -->
+        <div id="continue-modal" class="modal-overlay" style="display: none;">
+            <div class="modal-content">
+                <h3 class="modal-title">CRASH!</h3>
+                <p class="modal-desc">You hit an obstacle of the wrong color!</p>
+                <div class="modal-lives-display">
+                    LIVES REMAINING: <span id="modal-lives-count">3</span>
+                </div>
+                <div class="modal-controls">
+                    <button id="modal-continue-btn" class="btn btn-primary" data-tag="modal_continue_button">CONTINUE</button>
+                    <button id="modal-new-game-btn" class="btn btn-secondary" data-tag="modal_new_game_button">NEW GAME</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Victory Screen -->
+    <div id="victory-screen" class="screen">
+        <div class="gameover-content">
+            <h2 class="victory-title">LEVEL COMPLETE</h2>
+            
+            <div class="score-display">
+                <p class="score-label" id="victory-level-name">LEVEL 1 COMPLETE</p>
+                <p class="score-value" style="color: var(--neon-green); text-shadow: 0 0 20px var(--neon-green);">VICTORY</p>
+                
+                <!-- Star Rating Container -->
+                <div class="star-rating-container">
+                    <span id="star-1" class="star">★</span>
+                    <span id="star-2" class="star">★</span>
+                    <span id="star-3" class="star">★</span>
+                </div>
+                <p id="star-rating-label" style="font-size: 1rem; font-weight: bold; color: var(--neon-yellow); margin-top: 5px; text-shadow: 0 0 8px var(--neon-yellow); text-transform: uppercase;">3 STARS!</p>
+                
+                <p class="highscore-label" id="victory-message">NEXT CHALLENGE UNLOCKED</p>
+            </div>
+            
+            <div class="gameover-controls">
+                <button id="next-level-btn" class="btn btn-primary" data-tag="next_level_button">NEXT LEVEL</button>
+                <button id="victory-menu-btn" class="btn btn-secondary" data-tag="victory_menu_button">CHALLENGES</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Game Over Screen -->
+    <div id="game-over-screen" class="screen">
+        <div class="gameover-content">
+            <h2 class="gameover-title">GAME OVER</h2>
+            
+            <div class="score-display">
+                <p class="score-label">FINAL SCORE</p>
+                <p id="final-score" class="score-value">0</p>
+                <p class="highscore-label">BEST: <span id="gameover-highscore">0</span></p>
+            </div>
+            
+            <div class="gameover-controls">
+                <button id="restart-btn" class="btn btn-primary" data-tag="restart_button">RESTART GAME</button>
+                <button id="menu-btn" class="btn btn-secondary" data-tag="menu_button">MAIN MENU</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

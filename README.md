@@ -1,36 +1,21 @@
-# Color Twist
+<div align="center">
+<img width="1200" height="475" alt="GHBanner" src="https://ai.google.dev/static/site-assets/images/share-ais-513315318.png" />
+</div>
 
-A beautiful, modular HTML5 Canvas arcade game where players tap to jump and match colors with rotating obstacles.
+# Run and deploy your AI Studio app
 
-## Features
-- **Free Play**: Endless mode where the game gets progressively faster.
-- **Challenges**: 20 levels with distinct goals, obstacles, speed multipliers, and mechanics (wind/fans, left/right balancing, falling color rain).
-- **Skins Shop**: Unlock 5 custom player skins using coins collected during gameplay.
-- **Web Audio Synth**: Sound effects generated entirely procedurally using the Web Audio API.
+This contains everything you need to run your app locally.
 
-## Running Locally
+View your app in AI Studio: https://ai.studio/apps/d364a891-a375-4140-957f-e298bc617334
 
-### Prerequisites
-- [Node.js](https://nodejs.org/) (includes NPM)
+## Run Locally
 
-### Setup & Play
-1. Install dependencies:
-   ```bash
-   npm install
-   ```
-2. Start the local development server:
-   ```bash
-   npm run dev
-   ```
-3. Open your browser and navigate to the address shown (usually `http://localhost:5173`).
+**Prerequisites:**  [Android Studio](https://developer.android.com/studio)
 
-## Build and Deployment
-To package the game for production (it compiles everything into the `dist/` folder):
-```bash
-npm run build
-```
 
-You can preview the built production app locally using:
-```bash
-npm run preview
-```
+1. Open Android Studio
+2. Select **Open** and choose the directory containing this project
+3. Allow Android Studio to fix any incompatibilities as it imports the project.
+4. Create a file named `.env` in the project directory and set `GEMINI_API_KEY` in that file to your Gemini API key (see `.env.example` for an example)
+5. Remove this line from the app's `build.gradle.kts` file: `signingConfig = signingConfigs.getByName("debugConfig")`
+6. Run the app on an emulator or physical device
