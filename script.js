@@ -1546,12 +1546,17 @@ function createGame(soundEffects, currentLevel, onGameOver, onVictory) {
     }
 
     // Obstacle Drawing Functions
-    function drawObstacle(obs) {
+    function drawObstacle(obs, playerObj = player) {
         const cy = obs.y - cameraY;
         const cx = obs.x;
         ctx.save();
 
-        if (obs.type === 'circle') {
+        if (obs.type === 'custom' || obs.customType) {
+            if (window.ObstacleRegistry && window.ObstacleRegistry[obs.customType] && window.ObstacleRegistry[obs.customType].draw) {
+                window.ObstacleRegistry[obs.customType].draw(ctx, obs, cameraY, playerObj);
+            }
+        }
+        else if (obs.type === 'circle') {
             ctx.lineWidth = obs.thickness;
             for (let i = 0; i < 4; i++) {
                 ctx.beginPath();
@@ -2051,7 +2056,15 @@ function createGame(soundEffects, currentLevel, onGameOver, onVictory) {
             const vertDist = Math.abs(player.y - obs.y);
             if (vertDist > obs.radius + 30) continue;
 
-            if (obs.type === 'circle') {
+            if (obs.type === 'custom' || obs.customType) {
+                if (window.ObstacleRegistry && window.ObstacleRegistry[obs.customType] && window.ObstacleRegistry[obs.customType].checkCollision) {
+                    if (window.ObstacleRegistry[obs.customType].checkCollision(obs, player)) {
+                        triggerGameOver();
+                        return;
+                    }
+                }
+            }
+            else if (obs.type === 'circle') {
                 const dist = Math.hypot(player.x - obs.x, player.y - obs.y);
                 const halfThick = obs.thickness / 2;
                 if (Math.abs(dist - obs.radius) < (player.radius + halfThick)) {
@@ -2379,11 +2392,19 @@ function createGame(soundEffects, currentLevel, onGameOver, onVictory) {
 
             // Update Entity rotations
             for (let obs of obstacles) {
-                obs.rotation += obs.speed;
-                // Oscillate broken_line obstacles left and right
-                if (obs.type === 'broken_line') {
-                    obs.oscPhase = (obs.oscPhase || 0) + (obs.oscSpeed || 0.022);
-                    obs.oscOffset = Math.sin(obs.oscPhase) * (obs.oscAmplitude || 60);
+                if (obs.type === 'custom' || obs.customType) {
+                    if (window.ObstacleRegistry && window.ObstacleRegistry[obs.customType] && window.ObstacleRegistry[obs.customType].update) {
+                        window.ObstacleRegistry[obs.customType].update(obs, player);
+                    } else {
+                        obs.rotation += obs.speed;
+                    }
+                } else {
+                    obs.rotation += obs.speed;
+                    // Oscillate broken_line obstacles left and right
+                    if (obs.type === 'broken_line') {
+                        obs.oscPhase = (obs.oscPhase || 0) + (obs.oscSpeed || 0.022);
+                        obs.oscOffset = Math.sin(obs.oscPhase) * (obs.oscAmplitude || 60);
+                    }
                 }
             }
             for (let sw of switchers) {
@@ -2576,7 +2597,7 @@ function createGame(soundEffects, currentLevel, onGameOver, onVictory) {
 
         // Draw Obstacles
         for (let obs of obstacles) {
-            drawObstacle(obs);
+            drawObstacle(obs, player);
         }
 
         // Draw Stars
