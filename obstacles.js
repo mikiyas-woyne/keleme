@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Color Twist - Modular Obstacle Framework
  * This file contains the complete Obstacle Registry and Obstacle Manager.
  * It provides 50+ custom obstacle types across 10 distinct categories.
@@ -1831,8 +1831,7 @@ registerObstacle('optical_mirage', {
 registerObstacle('optical_shroud', {
     category: 'Optical',
     init: function (obs) { },
-    draw: function (ctx, obs, cameraY, player) {
-        if (!player) return;
+    draw: function (ctx, obs, cameraY) {
         const cy = obs.y - cameraY;
         const playerDistY = Math.abs(player.y - obs.y);
         if (playerDistY < 180) {

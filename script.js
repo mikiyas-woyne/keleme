@@ -137,50 +137,50 @@ class SoundEffects {
 const LEVELS = [
     {
         id: 1,
-        name: "First Steps",
-        description: "Reach 5 points through simple obstacles.",
+        name: "Circle Orbit",
+        description: "Reach 5 points with steady circular orbits.",
         targetScore: 5,
-        difficulty: 'easy',
+        types: ['circle'],
         speedMultiplier: 0.75
     },
     {
         id: 2,
-        name: "Getting Warmer",
-        description: "Reach 8 points. Slightly trickier obstacles.",
+        name: "Square Box",
+        description: "Reach 8 points with angular squares.",
         targetScore: 8,
-        difficulty: 'easy',
+        types: ['square'],
         speedMultiplier: 0.85
     },
     {
         id: 3,
         name: "Simple Rhythm",
-        description: "Reach 10 points. Mixed easy obstacles.",
+        description: "Reach 10 points. Mixed circles and squares.",
         targetScore: 10,
-        difficulty: 'easy',
+        types: ['circle', 'square'],
         speedMultiplier: 0.95
     },
     {
         id: 4,
-        name: "Rising Heat",
-        description: "Reach 12 points with faster obstacles.",
+        name: "Rapid Orbit",
+        description: "Reach 12 points with high-speed circles.",
         targetScore: 12,
-        difficulty: 'easy_medium',
+        types: ['circle'],
         speedMultiplier: 1.15
     },
     {
         id: 5,
         name: "Sharp Angles",
-        description: "Reach 14 points dodging medium obstacles.",
+        description: "Reach 14 points dodging fast boxes.",
         targetScore: 14,
-        difficulty: 'medium',
+        types: ['square'],
         speedMultiplier: 1.2
     },
     {
         id: 6,
         name: "Mixed Steps",
-        description: "Reach 16 points with varied geometry.",
+        description: "Reach 16 points with alternating geometry.",
         targetScore: 16,
-        difficulty: 'medium',
+        types: ['circle', 'square'],
         speedMultiplier: 1.25
     },
     {
@@ -188,23 +188,23 @@ const LEVELS = [
         name: "Focus Velocity",
         description: "Reach 18 points. Velocity is picking up.",
         targetScore: 18,
-        difficulty: 'medium',
+        types: ['circle', 'square'],
         speedMultiplier: 1.35
     },
     {
         id: 8,
-        name: "Gear Specialist",
-        description: "Reach 20 points through mechanical hazards.",
+        name: "Sphere Specialist",
+        description: "Reach 20 points in a high-speed circle vortex.",
         targetScore: 20,
-        difficulty: 'medium',
+        types: ['circle'],
         speedMultiplier: 1.4
     },
     {
         id: 9,
-        name: "Laser Maze",
-        description: "Reach 22 points dodging laser obstacles.",
+        name: "Block Master",
+        description: "Reach 22 points dodging rapid square barriers.",
         targetScore: 22,
-        difficulty: 'medium_hard',
+        types: ['square'],
         speedMultiplier: 1.45
     },
     {
@@ -212,7 +212,7 @@ const LEVELS = [
         name: "Peak Performance",
         description: "Reach 25 points. Halfway to legend!",
         targetScore: 25,
-        difficulty: 'hard',
+        types: ['circle', 'square'],
         speedMultiplier: 1.5
     },
     {
@@ -220,7 +220,7 @@ const LEVELS = [
         name: "Windy Heights",
         description: "Downward fan gusts resist your rise. Tap fast!",
         targetScore: 10,
-        difficulty: 'easy_medium',
+        types: ['circle', 'square'],
         speedMultiplier: 1.1,
         hasFans: true
     },
@@ -229,16 +229,16 @@ const LEVELS = [
         name: "Balance Basics",
         description: "Tap Left/Right to balance the ball on ascent!",
         targetScore: 12,
-        difficulty: 'easy',
+        types: ['circle'],
         speedMultiplier: 1.0,
         isBalance: true
     },
     {
         id: 13,
-        name: "Living Dangers",
-        description: "Dodge living creatures and creepy crawlies!",
+        name: "Sliding Barriers",
+        description: "Dodge moving horizontal broken lines!",
         targetScore: 14,
-        difficulty: 'medium',
+        types: ['broken_line'],
         speedMultiplier: 1.15
     },
     {
@@ -246,34 +246,34 @@ const LEVELS = [
         name: "Color Shower",
         description: "Raining colors! Click SWAP to match and absorb!",
         targetScore: 12,
-        difficulty: 'easy_medium',
+        types: ['circle'],
         speedMultiplier: 1.0,
         isRain: true
     },
     {
         id: 15,
         name: "Balance Cyclone",
-        description: "Fast obstacles while balancing!",
+        description: "Fast square box obstacles while balancing!",
         targetScore: 15,
-        difficulty: 'medium',
+        types: ['square'],
         speedMultiplier: 1.25,
         isBalance: true
     },
     {
         id: 16,
         name: "Storm Gusts",
-        description: "Heavy side wind gusts plus tricky obstacles!",
+        description: "Heavy side wind gusts plus double circles!",
         targetScore: 16,
-        difficulty: 'medium',
+        types: ['circle', 'double_circle'],
         speedMultiplier: 1.3,
         hasFans: true
     },
     {
         id: 17,
-        name: "Optical Illusions",
-        description: "Don't trust your eyes! Mirages and fading gates!",
+        name: "Prism Slide",
+        description: "Sliding broken lines plus double circles!",
         targetScore: 18,
-        difficulty: 'medium_hard',
+        types: ['broken_line', 'double_circle'],
         speedMultiplier: 1.35
     },
     {
@@ -281,34 +281,38 @@ const LEVELS = [
         name: "Raining Balance",
         description: "Raining color balls AND horizontal balancing!",
         targetScore: 18,
-        difficulty: 'medium',
+        types: ['circle'],
         speedMultiplier: 1.2,
         isBalance: true,
         isRain: true
     },
     {
         id: 19,
-        name: "Precision Strike",
-        description: "Navigate needle-thin gaps and locked gates!",
+        name: "Stormy Ascent",
+        description: "All-in-one! Fans, raining balls, and sliding lines!",
         targetScore: 20,
-        difficulty: 'hard',
+        types: ['circle', 'broken_line', 'square'],
         speedMultiplier: 1.4,
-        hasFans: true
+        hasFans: true,
+        isRain: true
     },
     {
         id: 20,
-        name: "Boss Rush",
-        description: "Face the guardians, dragons, and titans!",
+        name: "Eternal Champion",
+        description: "The ultimate trial. All elements combined!",
         targetScore: 25,
-        difficulty: 'hard',
-        speedMultiplier: 1.5
+        types: ['circle', 'square', 'double_circle', 'broken_line'],
+        speedMultiplier: 1.5,
+        isBalance: true,
+        isRain: true,
+        hasFans: true
     },
     {
         id: 21,
         name: "Fan Resistance",
         description: "Side-by-side fans create resistance walls — TAP FASTER to push through!",
         targetScore: 20,
-        difficulty: 'medium_hard',
+        types: ['circle', 'square'],
         speedMultiplier: 1.3,
         hasFans: true,
         hasSideBySideFans: true
@@ -316,9 +320,9 @@ const LEVELS = [
     {
         id: 22,
         name: "Ultimate Gauntlet",
-        description: "All challenges combined: fans, balance, rain. Survive!",
+        description: "All challenges combined: fans, balance, rain, sliding lines. Survive!",
         targetScore: 30,
-        difficulty: 'all',
+        types: ['circle', 'square', 'double_circle', 'broken_line'],
         speedMultiplier: 1.6,
         isBalance: true,
         isRain: true,
@@ -1330,99 +1334,41 @@ function createGame(soundEffects, currentLevel, onGameOver, onVictory) {
 
 
 
-    // --- Difficulty Pools for the 50 Custom Obstacle Types ---
-    const EASY_TYPES = [
-        'portal_warp', 'portal_shift', 'portal_mirror', 'portal_rift', 'portal_quantum',
-        'nature_whirlwind', 'nature_frost', 'nature_earthquake',
-        'gravity_rift', 'gravity_anchor', 'gravity_well',
-        'motion_bounce', 'motion_spring'
-    ];
-    const MEDIUM_TYPES = [
-        'gear_clockwork', 'piston_press', 'pendulum_scythe', 'conveyor_belt', 'crusher_walls',
-        'laser_gate', 'laser_cross', 'laser_sweep', 'laser_blinker', 'laser_grid',
-        'living_snake', 'living_swarm', 'living_jellyfish', 'living_ghost', 'living_slime',
-        'gravity_orbit', 'gravity_vortex',
-        'motion_zigzag', 'motion_elevator', 'motion_wheel'
-    ];
-    const HARD_TYPES = [
-        'optical_prism', 'optical_invisible', 'optical_strobe', 'optical_mirage', 'optical_shroud',
-        'precision_slit', 'precision_needle', 'precision_rhythm', 'precision_lock', 'precision_spiral',
-        'boss_guardian', 'boss_robot', 'boss_dragon', 'boss_titan', 'boss_shadow',
-        'nature_magma', 'nature_lightning'
-    ];
-
-    let lastObstacleType = null; // Track last spawned type to prevent repeats
-
-    function getObstaclePool(difficultyOrScore) {
-        // If a string difficulty is provided (from level config)
-        if (typeof difficultyOrScore === 'string') {
-            switch (difficultyOrScore) {
-                case 'easy': return [...EASY_TYPES];
-                case 'easy_medium': return [...EASY_TYPES, ...MEDIUM_TYPES];
-                case 'medium': return [...MEDIUM_TYPES];
-                case 'medium_hard': return [...MEDIUM_TYPES, ...HARD_TYPES];
-                case 'hard': return [...HARD_TYPES];
-                case 'all': return [...EASY_TYPES, ...MEDIUM_TYPES, ...HARD_TYPES];
-                default: return [...EASY_TYPES, ...MEDIUM_TYPES];
-            }
-        }
-        // Numeric score for free play progressive difficulty
-        const s = difficultyOrScore;
-        if (s < 5) return [...EASY_TYPES];
-        if (s < 12) return [...EASY_TYPES, ...MEDIUM_TYPES];
-        return [...EASY_TYPES, ...MEDIUM_TYPES, ...HARD_TYPES];
-    }
-
     function generateNextObstacle() {
         const spacing = 420; // vertical gap between obstacles
         const spawnY = highestYGenerated - spacing;
         highestYGenerated = spawnY;
 
-        // Build pool and pick a type (never the same as the last one)
-        let pool;
-        if (currentLevel && currentLevel.difficulty) {
-            pool = getObstaclePool(currentLevel.difficulty);
+        // Pick an obstacle type
+        let allowedTypes = ['circle', 'square'];
+        if (currentLevel) {
+            allowedTypes = currentLevel.types;
         } else {
-            pool = getObstaclePool(score);
+            if (score >= 4) allowedTypes.push('double_circle');
+            if (score >= 10) allowedTypes.push('broken_line');
         }
 
-        // Filter out last type to guarantee variety
-        if (lastObstacleType && pool.length > 1) {
-            pool = pool.filter(t => t !== lastObstacleType);
-        }
-
-        // Verify all types exist in registry, filter invalid ones
-        pool = pool.filter(t => window.ObstacleRegistry && window.ObstacleRegistry[t]);
-        if (pool.length === 0) {
-            // Fallback to all registered types
-            pool = Object.keys(window.ObstacleRegistry || {});
-            if (lastObstacleType && pool.length > 1) {
-                pool = pool.filter(t => t !== lastObstacleType);
-            }
-        }
-
-        const customType = pool[Math.floor(Math.random() * pool.length)];
-        lastObstacleType = customType;
+        const type = allowedTypes[Math.floor(Math.random() * allowedTypes.length)];
 
         const speedMult = currentLevel ? currentLevel.speedMultiplier : 1.0;
         const baseSpeed = (0.016 + Math.min(score * 0.002, 0.015)) * speedMult;
 
+        // broken_line: give it oscillation phase + slide speed
+        const speedVal = type === 'broken_line' ? baseSpeed * 1.6 : baseSpeed;
         const obstacle = {
             id: Date.now() + Math.random(),
             x: window.GAME_WIDTH / 2,
             y: spawnY,
-            type: 'custom', // Mark as custom type
-            customType: customType,
+            type: type,
             radius: 84,
             rotation: Math.random() * Math.PI * 2,
-            speed: baseSpeed * (Math.random() > 0.5 ? 1 : -1),
-            thickness: 14
+            speed: speedVal * (Math.random() > 0.5 ? 1 : -1),
+            thickness: type === 'broken_line' ? 16 : 14,
+            // Broken line oscillation: shifts left-right sinusoidally
+            oscPhase: Math.random() * Math.PI * 2,
+            oscSpeed: (0.018 + Math.random() * 0.012) * (Math.random() > 0.5 ? 1 : -1),
+            oscAmplitude: 55 + Math.random() * 40
         };
-
-        // Initialize the custom obstacle via its registry init handler
-        if (window.ObstacleRegistry[customType] && window.ObstacleRegistry[customType].init) {
-            window.ObstacleRegistry[customType].init(obstacle);
-        }
 
         obstacles.push(obstacle);
 
@@ -1466,21 +1412,24 @@ function createGame(soundEffects, currentLevel, onGameOver, onVictory) {
         if (isWindActiveThisTime) {
             const fanY = spawnY + spacing / 2 + 50;
             if (spawnSideBySide) {
+                // Side-by-side fans: two fan zones at same y level
+                // Left fan
                 fans.push({
                     y: fanY,
                     height: 180,
                     strength: 0.22,
                     bladeAngle: Math.random() * Math.PI * 2,
-                    side: 'left',
+                    side: 'left',        // left side fan
                     isSideBySide: true,
-                    resistanceY: fanY
+                    resistanceY: fanY    // y coordinate of resistance zone center
                 });
+                // Right fan
                 fans.push({
                     y: fanY,
                     height: 180,
                     strength: 0.22,
                     bladeAngle: Math.random() * Math.PI * 2,
-                    side: 'right',
+                    side: 'right',       // right side fan
                     isSideBySide: true,
                     resistanceY: fanY
                 });
@@ -1546,17 +1495,12 @@ function createGame(soundEffects, currentLevel, onGameOver, onVictory) {
     }
 
     // Obstacle Drawing Functions
-    function drawObstacle(obs, playerObj = player) {
+    function drawObstacle(obs) {
         const cy = obs.y - cameraY;
         const cx = obs.x;
         ctx.save();
 
-        if (obs.type === 'custom' || obs.customType) {
-            if (window.ObstacleRegistry && window.ObstacleRegistry[obs.customType] && window.ObstacleRegistry[obs.customType].draw) {
-                window.ObstacleRegistry[obs.customType].draw(ctx, obs, cameraY, playerObj);
-            }
-        }
-        else if (obs.type === 'circle') {
+        if (obs.type === 'circle') {
             ctx.lineWidth = obs.thickness;
             for (let i = 0; i < 4; i++) {
                 ctx.beginPath();
@@ -2056,15 +2000,7 @@ function createGame(soundEffects, currentLevel, onGameOver, onVictory) {
             const vertDist = Math.abs(player.y - obs.y);
             if (vertDist > obs.radius + 30) continue;
 
-            if (obs.type === 'custom' || obs.customType) {
-                if (window.ObstacleRegistry && window.ObstacleRegistry[obs.customType] && window.ObstacleRegistry[obs.customType].checkCollision) {
-                    if (window.ObstacleRegistry[obs.customType].checkCollision(obs, player)) {
-                        triggerGameOver();
-                        return;
-                    }
-                }
-            }
-            else if (obs.type === 'circle') {
+            if (obs.type === 'circle') {
                 const dist = Math.hypot(player.x - obs.x, player.y - obs.y);
                 const halfThick = obs.thickness / 2;
                 if (Math.abs(dist - obs.radius) < (player.radius + halfThick)) {
@@ -2392,19 +2328,11 @@ function createGame(soundEffects, currentLevel, onGameOver, onVictory) {
 
             // Update Entity rotations
             for (let obs of obstacles) {
-                if (obs.type === 'custom' || obs.customType) {
-                    if (window.ObstacleRegistry && window.ObstacleRegistry[obs.customType] && window.ObstacleRegistry[obs.customType].update) {
-                        window.ObstacleRegistry[obs.customType].update(obs, player);
-                    } else {
-                        obs.rotation += obs.speed;
-                    }
-                } else {
-                    obs.rotation += obs.speed;
-                    // Oscillate broken_line obstacles left and right
-                    if (obs.type === 'broken_line') {
-                        obs.oscPhase = (obs.oscPhase || 0) + (obs.oscSpeed || 0.022);
-                        obs.oscOffset = Math.sin(obs.oscPhase) * (obs.oscAmplitude || 60);
-                    }
+                obs.rotation += obs.speed;
+                // Oscillate broken_line obstacles left and right
+                if (obs.type === 'broken_line') {
+                    obs.oscPhase = (obs.oscPhase || 0) + (obs.oscSpeed || 0.022);
+                    obs.oscOffset = Math.sin(obs.oscPhase) * (obs.oscAmplitude || 60);
                 }
             }
             for (let sw of switchers) {
@@ -2597,7 +2525,7 @@ function createGame(soundEffects, currentLevel, onGameOver, onVictory) {
 
         // Draw Obstacles
         for (let obs of obstacles) {
-            drawObstacle(obs, player);
+            drawObstacle(obs);
         }
 
         // Draw Stars
