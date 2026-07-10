@@ -907,6 +907,20 @@ function createGame(soundEffects, currentLevel, onGameOver, onVictory) {
     const ctx = canvas.getContext('2d');
     const scoreText = document.getElementById('current-score');
 
+    // Cheap glow helper — skips shadowBlur entirely on mobile (biggest GPU saver).
+    function applyGlow(blur, color) {
+        if (window.LOW_FX) {
+            ctx.shadowBlur = 0;
+            return;
+        }
+        ctx.shadowBlur = blur * (window.SHADOW_MULT !== undefined ? window.SHADOW_MULT : 1);
+        ctx.shadowColor = color;
+    }
+
+    function getInitialObstacleCount() {
+        return currentLevel ? 3 : 6;
+    }
+
     // Neon Arc Colors Palette
     const COLORS = [
         '#00f0ff', // Cyan
@@ -919,6 +933,7 @@ function createGame(soundEffects, currentLevel, onGameOver, onVictory) {
     let isPlaying = true;
     let isDestroyed = false;
     let score = 0;
+    let loopFrame = 0;
 
     // Dynamic Level Layout Entities
     const obstacles = [];
@@ -965,7 +980,7 @@ function createGame(soundEffects, currentLevel, onGameOver, onVictory) {
 
     function initAmbientParticles() {
         ambientParticles.length = 0;
-        const count = window.IS_MOBILE ? 14 : 35;
+        const count = window.IS_MOBILE ? 6 : 35;
         for (let i = 0; i < count; i++) {
             ambientParticles.push({
                 x: Math.random() * window.GAME_WIDTH,
@@ -1095,7 +1110,7 @@ function createGame(soundEffects, currentLevel, onGameOver, onVictory) {
         collectables.length = 0;
         switchers.length = 0;
         obstacleCount = 0;
-        for (let i = 0; i < 3; i++) {
+        for (let i = 0; i < getInitialObstacleCount(); i++) {
             generateNextObstacle();
         }
 
@@ -1212,8 +1227,7 @@ function createGame(soundEffects, currentLevel, onGameOver, onVictory) {
             ctx.save();
             ctx.translate(this.x, this.y - cameraY);
 
-            ctx.shadowBlur = (12) * (window.SHADOW_MULT !== undefined ? window.SHADOW_MULT : 1);
-            ctx.shadowColor = this.color;
+            applyGlow(12, this.color);
             ctx.fillStyle = this.color;
             ctx.strokeStyle = this.color;
 
@@ -1318,13 +1332,10 @@ function createGame(soundEffects, currentLevel, onGameOver, onVictory) {
         canvas.style.height = window.GAME_HEIGHT + "px";
         ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
-        // shadowBlur is by far the most expensive canvas operation on mobile GPUs/software
-        // rasterizers, and it was previously left at full strength on every device, which was
-        // the main cause of mobile lag. We keep full glow on desktop but noticeably cut it on
-        // mobile so obstacles/player still glow, just far cheaper to render.
-        window.SHADOW_MULT = isMobile ? 0.45 : 1;
-        // Extra flag used to skip glow entirely on high-frequency, low-importance elements
-        // (ambient dust, trail particles, wind particles) on mobile only.
+        // shadowBlur is the most expensive canvas operation on mobile GPUs. We disable it
+        // entirely on mobile via LOW_FX + applyGlow(), and use a solid background clear
+        // instead of alpha compositing every frame.
+        window.SHADOW_MULT = isMobile ? 0 : 1;
         window.LOW_FX = isMobile;
 
         groundY = window.GAME_HEIGHT * 0.78;
@@ -1340,7 +1351,7 @@ function createGame(soundEffects, currentLevel, onGameOver, onVictory) {
             collectables.length = 0;
             switchers.length = 0;
             obstacleCount = 0;
-            for (let i = 0; i < 3; i++) {
+            for (let i = 0; i < getInitialObstacleCount(); i++) {
                 generateNextObstacle();
             }
         }
@@ -1351,7 +1362,8 @@ function createGame(soundEffects, currentLevel, onGameOver, onVictory) {
     // Particles System
     const particles = [];
     function spawnExplosion(x, y, color, count = 12) {
-        for (let i = 0; i < count; i++) {
+        const burstCount = window.LOW_FX ? Math.min(count, 6) : count;
+        for (let i = 0; i < burstCount; i++) {
             const angle = Math.random() * Math.PI * 2;
             const speed = 1.5 + Math.random() * 3.5;
             particles.push({
@@ -1384,7 +1396,7 @@ function createGame(soundEffects, currentLevel, onGameOver, onVictory) {
         }
     }
 
-    const MAX_PARTICLES = window.IS_MOBILE ? 90 : 220;
+    const MAX_PARTICLES = window.IS_MOBILE ? 45 : 220;
 
     function updateAndDrawParticles() {
         // Hard cap so a burst of explosions/trails can never pile up into a lag spike
@@ -1407,10 +1419,7 @@ function createGame(soundEffects, currentLevel, onGameOver, onVictory) {
             ctx.beginPath();
             ctx.arc(p.x, p.y - cameraY, p.radius, 0, Math.PI * 2);
             ctx.fillStyle = p.color;
-            if (!window.LOW_FX) {
-                ctx.shadowBlur = (6) * (window.SHADOW_MULT !== undefined ? window.SHADOW_MULT : 1);
-                ctx.shadowColor = p.color;
-            }
+            applyGlow(6, p.color);
             ctx.fill();
             ctx.restore();
         }
@@ -1419,18 +1428,17 @@ function createGame(soundEffects, currentLevel, onGameOver, onVictory) {
 
 
     function generateNextObstacle() {
-        const spacing = 420; // vertical gap between obstacles
+        const spacing = currentLevel ? 420 : 340; // tighter gaps in free play
         const spawnY = highestYGenerated - spacing;
         highestYGenerated = spawnY;
 
         // Pick an obstacle type
-        let allowedTypes = ['circle', 'square'];
+        let allowedTypes;
         if (currentLevel) {
             allowedTypes = currentLevel.types;
         } else {
-            if (score >= 4) allowedTypes.push('double_circle');
-            if (score >= 10) allowedTypes.push('broken_line');
-            if (score >= 16) allowedTypes.push('cross');
+            // Free play: full variety from the very first obstacle
+            allowedTypes = ['circle', 'square', 'double_circle', 'cross', 'broken_line'];
         }
 
         // Never spawn the same obstacle type twice in a row (when variety is available) so
@@ -1542,7 +1550,7 @@ function createGame(soundEffects, currentLevel, onGameOver, onVictory) {
     }
 
     // Initialize first few obstacles
-    for (let i = 0; i < 3; i++) {
+    for (let i = 0; i < getInitialObstacleCount(); i++) {
         generateNextObstacle();
     }
 
@@ -1570,8 +1578,7 @@ function createGame(soundEffects, currentLevel, onGameOver, onVictory) {
         ctx.lineTo(cx, cy - outerRadius);
         ctx.closePath();
         ctx.fillStyle = fillColor;
-        ctx.shadowBlur = (10) * (window.SHADOW_MULT !== undefined ? window.SHADOW_MULT : 1);
-        ctx.shadowColor = fillColor;
+        applyGlow(10, fillColor);
         ctx.fill();
     }
 
@@ -1604,8 +1611,7 @@ function createGame(soundEffects, currentLevel, onGameOver, onVictory) {
                 const endAngle = startAngle + Math.PI / 2;
                 ctx.arc(cx, cy, obs.radius, startAngle, endAngle);
                 ctx.strokeStyle = COLORS[i];
-                ctx.shadowBlur = (8) * (window.SHADOW_MULT !== undefined ? window.SHADOW_MULT : 1);
-                ctx.shadowColor = COLORS[i];
+                applyGlow(8, COLORS[i]);
                 ctx.stroke();
             }
         }
@@ -1629,8 +1635,7 @@ function createGame(soundEffects, currentLevel, onGameOver, onVictory) {
                 const endAngle = startAngle + Math.PI / 2;
                 ctx.arc(cx, cy, obs.radius, startAngle, endAngle);
                 ctx.strokeStyle = COLORS[i];
-                ctx.shadowBlur = (8) * (window.SHADOW_MULT !== undefined ? window.SHADOW_MULT : 1);
-                ctx.shadowColor = COLORS[i];
+                applyGlow(8, COLORS[i]);
                 ctx.stroke();
             }
         }
@@ -1647,8 +1652,7 @@ function createGame(soundEffects, currentLevel, onGameOver, onVictory) {
                 ctx.moveTo(startX, startY);
                 ctx.lineTo(endX, endY);
                 ctx.strokeStyle = COLORS[i];
-                ctx.shadowBlur = (6) * (window.SHADOW_MULT !== undefined ? window.SHADOW_MULT : 1);
-                ctx.shadowColor = COLORS[i];
+                applyGlow(6, COLORS[i]);
                 ctx.stroke();
             }
         }
@@ -1668,8 +1672,7 @@ function createGame(soundEffects, currentLevel, onGameOver, onVictory) {
                 ctx.moveTo(x1, y1);
                 ctx.lineTo(x2, y2);
                 ctx.strokeStyle = COLORS[i];
-                ctx.shadowBlur = (8) * (window.SHADOW_MULT !== undefined ? window.SHADOW_MULT : 1);
-                ctx.shadowColor = COLORS[i];
+                applyGlow(8, COLORS[i]);
                 ctx.stroke();
             }
         }
@@ -1682,16 +1685,17 @@ function createGame(soundEffects, currentLevel, onGameOver, onVictory) {
             // Oscillation: sinusoidal left/right shift
             const oscOff = obs.oscOffset || 0;
 
-            // Draw multiple copies side-by-side to ensure full horizontal wrapping
-            for (let copy = -1; copy <= 1; copy++) {
+            // On mobile draw a single copy; desktop draws 3 for seamless wrapping
+            const copyMin = window.LOW_FX ? 0 : -1;
+            const copyMax = window.LOW_FX ? 0 : 1;
+            for (let copy = copyMin; copy <= copyMax; copy++) {
                 const baseStartX = cx + slideX + oscOff + copy * totalWidth - totalWidth / 2;
                 for (let i = 0; i < 4; i++) {
                     ctx.beginPath();
                     ctx.moveTo(baseStartX + i * segmentWidth, cy);
                     ctx.lineTo(baseStartX + (i + 1) * segmentWidth, cy);
                     ctx.strokeStyle = COLORS[i];
-                    ctx.shadowBlur = (8) * (window.SHADOW_MULT !== undefined ? window.SHADOW_MULT : 1);
-                    ctx.shadowColor = COLORS[i];
+                    applyGlow(8, COLORS[i]);
                     ctx.stroke();
                 }
             }
@@ -2333,50 +2337,57 @@ function createGame(soundEffects, currentLevel, onGameOver, onVictory) {
         const bgG = Math.round(currentBgColor[1]);
         const bgB = Math.round(currentBgColor[2]);
 
-        // Sync HTML body background seamlessly to make menus and cards feel integrated
-        document.body.style.backgroundColor = `rgb(${bgR}, ${bgG}, ${bgB})`;
+        // Sync HTML body background — throttle on mobile to avoid layout thrashing
+        if (!window.IS_MOBILE || loopFrame % 8 === 0) {
+            document.body.style.backgroundColor = `rgb(${bgR}, ${bgG}, ${bgB})`;
+        }
 
         if (!isPlaying) {
             // Draw death explosion frame sequence
-            ctx.fillStyle = `rgba(${bgR}, ${bgG}, ${bgB}, 0.4)`;
+            ctx.fillStyle = window.LOW_FX
+                ? `rgb(${bgR}, ${bgG}, ${bgB})`
+                : `rgba(${bgR}, ${bgG}, ${bgB}, 0.4)`;
             ctx.fillRect(0, 0, window.GAME_WIDTH, window.GAME_HEIGHT);
             updateAndDrawParticles();
+            loopFrame++;
             animationId = requestAnimationFrame(loop);
             return;
         }
 
-        ctx.fillStyle = `rgba(${bgR}, ${bgG}, ${bgB}, 0.55)`; // subtle trace trailing
+        // Solid clear on mobile (alpha compositing every frame is very expensive)
+        ctx.fillStyle = window.LOW_FX
+            ? `rgb(${bgR}, ${bgG}, ${bgB})`
+            : `rgba(${bgR}, ${bgG}, ${bgB}, 0.55)`;
         ctx.fillRect(0, 0, window.GAME_WIDTH, window.GAME_HEIGHT);
 
         // Update and draw ambient background particles (with parallax ascent)
         const dCamY = cameraY - lastCameraY;
         lastCameraY = cameraY;
 
-        ctx.save();
-        for (let p of ambientParticles) {
-            p.y -= p.speedY;
-            p.y -= dCamY * 0.28;
+        if (!window.LOW_FX) {
+            ctx.save();
+            for (let p of ambientParticles) {
+                p.y -= p.speedY;
+                p.y -= dCamY * 0.28;
 
-            if (p.y < 0) {
-                p.y = window.GAME_HEIGHT;
-                p.x = Math.random() * window.GAME_WIDTH;
-            } else if (p.y > window.GAME_HEIGHT) {
-                p.y = 0;
-                p.x = Math.random() * window.GAME_WIDTH;
-            }
+                if (p.y < 0) {
+                    p.y = window.GAME_HEIGHT;
+                    p.x = Math.random() * window.GAME_WIDTH;
+                } else if (p.y > window.GAME_HEIGHT) {
+                    p.y = 0;
+                    p.x = Math.random() * window.GAME_WIDTH;
+                }
 
-            ctx.beginPath();
-            ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
-            const pColor = player.color;
-            ctx.fillStyle = pColor;
-            ctx.globalAlpha = p.alpha * 0.45; // softer since they are matching player color
-            if (!window.LOW_FX) {
-                ctx.shadowBlur = (4) * (window.SHADOW_MULT !== undefined ? window.SHADOW_MULT : 1);
-                ctx.shadowColor = pColor;
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+                const pColor = player.color;
+                ctx.fillStyle = pColor;
+                ctx.globalAlpha = p.alpha * 0.45;
+                applyGlow(4, pColor);
+                ctx.fill();
             }
-            ctx.fill();
+            ctx.restore();
         }
-        ctx.restore();
 
         if (!isPaused) {
             // --- Update Active Challenges/Modes dynamically ---
@@ -2568,8 +2579,8 @@ function createGame(soundEffects, currentLevel, onGameOver, onVictory) {
             // Physics Update
             player.update();
 
-            // Continuous custom trail based on equipped skin!
-            if (Math.random() < (window.IS_MOBILE ? 0.15 : 0.35)) {
+            // Continuous custom trail based on equipped skin (disabled on mobile)
+            if (!window.IS_MOBILE && Math.random() < 0.35) {
                 let trailRadius = player.radius * 0.45;
                 let decayVal = 0.045;
                 if (activeSkin === 'vortex_star') {
@@ -2692,6 +2703,7 @@ function createGame(soundEffects, currentLevel, onGameOver, onVictory) {
         // Draw Floating Challenge Banner on top
         drawChallengeBanner();
 
+        loopFrame++;
         animationId = requestAnimationFrame(loop);
     }
 
