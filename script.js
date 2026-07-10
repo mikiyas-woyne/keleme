@@ -134,6 +134,11 @@ class SoundEffects {
 // ----------------------------------------------------------------------------
 // Challenges and Level Metadata Definitions
 // ----------------------------------------------------------------------------
+// Level order is intentionally interleaved so that no two consecutive levels share the
+// same special mechanic (fans / balance / rain / chaos / side-fans). Difficulty still
+// trends upward overall, but with the occasional easier "breather" level for pacing, and
+// no level combines more than 2 special mechanics at once (the old finale levels stacked
+// 3-4 at max speed and were effectively unwinnable — this keeps every level tough but fair).
 const LEVELS = [
     {
         id: 1,
@@ -153,6 +158,15 @@ const LEVELS = [
     },
     {
         id: 3,
+        name: "Windy Whispers",
+        description: "A gentle first breeze. Fan gusts resist your rise — tap through!",
+        targetScore: 8,
+        types: ['circle', 'square'],
+        speedMultiplier: 0.9,
+        hasFans: true
+    },
+    {
+        id: 4,
         name: "Simple Rhythm",
         description: "Reach 10 points. Mixed circles and squares.",
         targetScore: 10,
@@ -160,7 +174,33 @@ const LEVELS = [
         speedMultiplier: 0.95
     },
     {
-        id: 4,
+        id: 5,
+        name: "Balance Basics",
+        description: "Tap Left/Right to balance the ball on ascent!",
+        targetScore: 10,
+        types: ['circle'],
+        speedMultiplier: 1.0,
+        isBalance: true
+    },
+    {
+        id: 6,
+        name: "Cross Roads",
+        description: "A brand new obstacle enters: dodge the open-armed Cross!",
+        targetScore: 10,
+        types: ['circle', 'cross'],
+        speedMultiplier: 1.0
+    },
+    {
+        id: 7,
+        name: "Color Shower",
+        description: "Raining colors! Tap SWAP to match and absorb!",
+        targetScore: 10,
+        types: ['circle'],
+        speedMultiplier: 1.0,
+        isRain: true
+    },
+    {
+        id: 8,
         name: "Rapid Orbit",
         description: "Reach 12 points with high-speed circles.",
         targetScore: 12,
@@ -168,7 +208,16 @@ const LEVELS = [
         speedMultiplier: 1.15
     },
     {
-        id: 5,
+        id: 9,
+        name: "Windy Heights",
+        description: "Downward fan gusts resist your rise. Tap fast!",
+        targetScore: 12,
+        types: ['circle', 'square'],
+        speedMultiplier: 1.1,
+        hasFans: true
+    },
+    {
+        id: 10,
         name: "Sharp Angles",
         description: "Reach 14 points dodging fast boxes.",
         targetScore: 14,
@@ -176,65 +225,16 @@ const LEVELS = [
         speedMultiplier: 1.2
     },
     {
-        id: 6,
-        name: "Mixed Steps",
-        description: "Reach 16 points with alternating geometry.",
-        targetScore: 16,
-        types: ['circle', 'square'],
-        speedMultiplier: 1.25
-    },
-    {
-        id: 7,
-        name: "Focus Velocity",
-        description: "Reach 18 points. Velocity is picking up.",
-        targetScore: 18,
-        types: ['circle', 'square'],
-        speedMultiplier: 1.35
-    },
-    {
-        id: 8,
-        name: "Sphere Specialist",
-        description: "Reach 20 points in a high-speed circle vortex.",
-        targetScore: 20,
-        types: ['circle'],
-        speedMultiplier: 1.4
-    },
-    {
-        id: 9,
-        name: "Block Master",
-        description: "Reach 22 points dodging rapid square barriers.",
-        targetScore: 22,
-        types: ['square'],
-        speedMultiplier: 1.45
-    },
-    {
-        id: 10,
-        name: "Peak Performance",
-        description: "Reach 25 points. Halfway to legend!",
-        targetScore: 25,
-        types: ['circle', 'square'],
-        speedMultiplier: 1.5
-    },
-    {
         id: 11,
-        name: "Windy Heights",
-        description: "Downward fan gusts resist your rise. Tap fast!",
-        targetScore: 10,
+        name: "Chaos Colors",
+        description: "Your color randomly swaps itself every few seconds — stay alert!",
+        targetScore: 14,
         types: ['circle', 'square'],
-        speedMultiplier: 1.1,
-        hasFans: true
+        speedMultiplier: 1.05,
+        isChaos: true
     },
     {
         id: 12,
-        name: "Balance Basics",
-        description: "Tap Left/Right to balance the ball on ascent!",
-        targetScore: 12,
-        types: ['circle'],
-        speedMultiplier: 1.0,
-        isBalance: true
-    },
-    {
-        id: 13,
         name: "Sliding Barriers",
         description: "Dodge moving horizontal broken lines!",
         targetScore: 14,
@@ -242,16 +242,7 @@ const LEVELS = [
         speedMultiplier: 1.15
     },
     {
-        id: 14,
-        name: "Color Shower",
-        description: "Raining colors! Click SWAP to match and absorb!",
-        targetScore: 12,
-        types: ['circle'],
-        speedMultiplier: 1.0,
-        isRain: true
-    },
-    {
-        id: 15,
+        id: 13,
         name: "Balance Cyclone",
         description: "Fast square box obstacles while balancing!",
         targetScore: 15,
@@ -260,74 +251,140 @@ const LEVELS = [
         isBalance: true
     },
     {
-        id: 16,
-        name: "Storm Gusts",
-        description: "Heavy side wind gusts plus double circles!",
+        id: 14,
+        name: "Mixed Steps",
+        description: "Reach 16 points with alternating geometry.",
         targetScore: 16,
-        types: ['circle', 'double_circle'],
-        speedMultiplier: 1.3,
+        types: ['circle', 'square'],
+        speedMultiplier: 1.25
+    },
+    {
+        id: 15,
+        name: "Cross Current",
+        description: "Crosses return, now with a fan current pushing back!",
+        targetScore: 16,
+        types: ['circle', 'cross'],
+        speedMultiplier: 1.15,
         hasFans: true
     },
     {
+        id: 16,
+        name: "Focus Velocity",
+        description: "Reach 18 points. Velocity is picking up.",
+        targetScore: 18,
+        types: ['circle', 'square'],
+        speedMultiplier: 1.3
+    },
+    {
         id: 17,
+        name: "Fan Resistance",
+        description: "Side-by-side fans create resistance walls — TAP FASTER to push through!",
+        targetScore: 16,
+        types: ['circle', 'square'],
+        speedMultiplier: 1.2,
+        hasFans: true,
+        hasSideBySideFans: true
+    },
+    {
+        id: 18,
         name: "Prism Slide",
         description: "Sliding broken lines plus double circles!",
         targetScore: 18,
         types: ['broken_line', 'double_circle'],
+        speedMultiplier: 1.3
+    },
+    {
+        id: 19,
+        name: "Raining Chaos",
+        description: "Falling color balls AND your own color keeps shuffling. Focus!",
+        targetScore: 16,
+        types: ['circle'],
+        speedMultiplier: 1.1,
+        isRain: true,
+        isChaos: true
+    },
+    {
+        id: 20,
+        name: "Sphere Specialist",
+        description: "Reach 20 points in a high-speed circle vortex.",
+        targetScore: 20,
+        types: ['circle'],
         speedMultiplier: 1.35
     },
     {
-        id: 18,
+        id: 21,
+        name: "Balance Storm",
+        description: "Balancing left and right while fan gusts push you around!",
+        targetScore: 18,
+        types: ['circle', 'square'],
+        speedMultiplier: 1.2,
+        isBalance: true,
+        hasFans: true
+    },
+    {
+        id: 22,
+        name: "Block Master",
+        description: "Reach 20 points dodging rapid square barriers.",
+        targetScore: 20,
+        types: ['square'],
+        speedMultiplier: 1.4
+    },
+    {
+        id: 23,
+        name: "Storm Gusts",
+        description: "Heavy wind gusts plus double circles!",
+        targetScore: 18,
+        types: ['circle', 'double_circle'],
+        speedMultiplier: 1.25,
+        hasFans: true
+    },
+    {
+        id: 24,
+        name: "Peak Performance",
+        description: "Reach 22 points. Take a breath — you've earned it!",
+        targetScore: 22,
+        types: ['circle', 'square'],
+        speedMultiplier: 1.4
+    },
+    {
+        id: 25,
         name: "Raining Balance",
         description: "Raining color balls AND horizontal balancing!",
         targetScore: 18,
         types: ['circle'],
-        speedMultiplier: 1.2,
+        speedMultiplier: 1.15,
         isBalance: true,
         isRain: true
     },
     {
-        id: 19,
+        id: 26,
         name: "Stormy Ascent",
-        description: "All-in-one! Fans, raining balls, and sliding lines!",
+        description: "Fans and raining balls together — tap smart, not just fast!",
         targetScore: 20,
         types: ['circle', 'broken_line', 'square'],
-        speedMultiplier: 1.4,
+        speedMultiplier: 1.25,
         hasFans: true,
         isRain: true
     },
     {
-        id: 20,
+        id: 27,
         name: "Eternal Champion",
-        description: "The ultimate trial. All elements combined!",
-        targetScore: 25,
-        types: ['circle', 'square', 'double_circle', 'broken_line'],
-        speedMultiplier: 1.5,
-        isBalance: true,
-        isRain: true,
-        hasFans: true
+        description: "Every obstacle shape returns, and you must balance through them all!",
+        targetScore: 22,
+        types: ['circle', 'square', 'double_circle', 'broken_line', 'cross'],
+        speedMultiplier: 1.35,
+        isBalance: true
     },
     {
-        id: 21,
-        name: "Fan Resistance",
-        description: "Side-by-side fans create resistance walls — TAP FASTER to push through!",
-        targetScore: 20,
-        types: ['circle', 'square'],
-        speedMultiplier: 1.3,
-        hasFans: true,
-        hasSideBySideFans: true
-    },
-    {
-        id: 22,
+        id: 28,
         name: "Ultimate Gauntlet",
-        description: "All challenges combined: fans, balance, rain, sliding lines. Survive!",
-        targetScore: 30,
-        types: ['circle', 'square', 'double_circle', 'broken_line'],
-        speedMultiplier: 1.6,
-        isBalance: true,
-        isRain: true,
+        description: "The final trial: side-fan resistance plus chaos colors. Survive it all!",
+        targetScore: 24,
+        types: ['circle', 'square', 'double_circle', 'broken_line', 'cross'],
+        speedMultiplier: 1.4,
         hasFans: true,
-        hasSideBySideFans: true
+        hasSideBySideFans: true,
+        isChaos: true
     }
 ];
 
@@ -354,7 +411,15 @@ const BG_PALETTES = [
     [14, 36, 18],   // Level 17: Radioactive jade
     [28, 32, 10],   // Level 18: Amber shade
     [36, 22, 10],   // Level 19: Sunset embers
-    [28, 14, 36]    // Level 20: Cosmic nebula
+    [28, 14, 36],   // Level 20: Cosmic nebula
+    [10, 20, 30],   // Level 21: Storm slate
+    [30, 24, 8],    // Level 22: Iron amber
+    [12, 30, 34],   // Level 23: Deep lagoon
+    [22, 10, 14],   // Level 24: Dusk garnet
+    [16, 12, 34],   // Level 25: Violet dusk
+    [10, 34, 20],   // Level 26: Emerald storm
+    [34, 10, 20],   // Level 27: Champion crimson
+    [8, 8, 8]       // Level 28: Final void
 ];
 
 // ----------------------------------------------------------------------------
@@ -860,6 +925,8 @@ function createGame(soundEffects, currentLevel, onGameOver, onVictory) {
     const collectables = []; // Stars inside obstacles
     const switchers = [];    // Color switch nodes
     let obstacleCount = 0;
+    let lastObstacleType = null; // used so the same obstacle type never spawns twice in a row
+    let chaosTimer = 0; // countdown to next forced color shuffle for "Chaos" challenges
 
     let groundY = (window.innerHeight || 640) * 0.78;
     let highestYGenerated = (window.innerHeight || 640) * 0.85;
@@ -878,6 +945,7 @@ function createGame(soundEffects, currentLevel, onGameOver, onVictory) {
     // --- Brand New Dynamic Challenges States ---
     let isBalanceActive = false;
     let isRainActive = false;
+    let isChaosActive = false;
     const fans = [];           // active downward wind zones
     const rainingBalls = [];   // falling colored balls
     let rainSpawnTimer = 0;    // countdown frames to next rain ball
@@ -897,7 +965,7 @@ function createGame(soundEffects, currentLevel, onGameOver, onVictory) {
 
     function initAmbientParticles() {
         ambientParticles.length = 0;
-        const count = 35;
+        const count = window.IS_MOBILE ? 14 : 35;
         for (let i = 0; i < count; i++) {
             ambientParticles.push({
                 x: Math.random() * window.GAME_WIDTH,
@@ -1239,9 +1307,10 @@ function createGame(soundEffects, currentLevel, onGameOver, onVictory) {
         window.GAME_HEIGHT = window.innerHeight || 640;
 
         const isMobile = window.GAME_WIDTH <= 768 || ('ontouchstart' in window) || navigator.maxTouchPoints > 0;
+        window.IS_MOBILE = isMobile;
 
         // Optimizing DPR on mobile: using full DPR + shadowBlur causes massive lag.
-        // A dpr of 1 gives smooth 60fps while allowing us to keep full neon glow (SHADOW_MULT = 1).
+        // A dpr of 1 gives smooth 60fps.
         const dpr = isMobile ? 1 : Math.min(window.devicePixelRatio || 1, 2);
         canvas.width = window.GAME_WIDTH * dpr;
         canvas.height = window.GAME_HEIGHT * dpr;
@@ -1249,7 +1318,14 @@ function createGame(soundEffects, currentLevel, onGameOver, onVictory) {
         canvas.style.height = window.GAME_HEIGHT + "px";
         ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
-        window.SHADOW_MULT = 1; // Keep full neon effects for all devices
+        // shadowBlur is by far the most expensive canvas operation on mobile GPUs/software
+        // rasterizers, and it was previously left at full strength on every device, which was
+        // the main cause of mobile lag. We keep full glow on desktop but noticeably cut it on
+        // mobile so obstacles/player still glow, just far cheaper to render.
+        window.SHADOW_MULT = isMobile ? 0.45 : 1;
+        // Extra flag used to skip glow entirely on high-frequency, low-importance elements
+        // (ambient dust, trail particles, wind particles) on mobile only.
+        window.LOW_FX = isMobile;
 
         groundY = window.GAME_HEIGHT * 0.78;
 
@@ -1308,7 +1384,13 @@ function createGame(soundEffects, currentLevel, onGameOver, onVictory) {
         }
     }
 
+    const MAX_PARTICLES = window.IS_MOBILE ? 90 : 220;
+
     function updateAndDrawParticles() {
+        // Hard cap so a burst of explosions/trails can never pile up into a lag spike
+        if (particles.length > MAX_PARTICLES) {
+            particles.splice(0, particles.length - MAX_PARTICLES);
+        }
         for (let i = particles.length - 1; i >= 0; i--) {
             const p = particles[i];
             p.x += p.vx;
@@ -1325,8 +1407,10 @@ function createGame(soundEffects, currentLevel, onGameOver, onVictory) {
             ctx.beginPath();
             ctx.arc(p.x, p.y - cameraY, p.radius, 0, Math.PI * 2);
             ctx.fillStyle = p.color;
-            ctx.shadowBlur = (6) * (window.SHADOW_MULT !== undefined ? window.SHADOW_MULT : 1);
-            ctx.shadowColor = p.color;
+            if (!window.LOW_FX) {
+                ctx.shadowBlur = (6) * (window.SHADOW_MULT !== undefined ? window.SHADOW_MULT : 1);
+                ctx.shadowColor = p.color;
+            }
             ctx.fill();
             ctx.restore();
         }
@@ -1346,9 +1430,18 @@ function createGame(soundEffects, currentLevel, onGameOver, onVictory) {
         } else {
             if (score >= 4) allowedTypes.push('double_circle');
             if (score >= 10) allowedTypes.push('broken_line');
+            if (score >= 16) allowedTypes.push('cross');
         }
 
-        const type = allowedTypes[Math.floor(Math.random() * allowedTypes.length)];
+        // Never spawn the same obstacle type twice in a row (when variety is available) so
+        // the run doesn't feel repetitive and every level actually uses its full type pool.
+        let typePool = allowedTypes;
+        if (allowedTypes.length > 1 && lastObstacleType) {
+            const filtered = allowedTypes.filter(t => t !== lastObstacleType);
+            if (filtered.length > 0) typePool = filtered;
+        }
+        const type = typePool[Math.floor(Math.random() * typePool.length)];
+        lastObstacleType = type;
 
         const speedMult = currentLevel ? currentLevel.speedMultiplier : 1.0;
         const baseSpeed = (0.016 + Math.min(score * 0.002, 0.015)) * speedMult;
@@ -1372,15 +1465,17 @@ function createGame(soundEffects, currentLevel, onGameOver, onVictory) {
 
         obstacles.push(obstacle);
 
-        // Put a Star inside every obstacle
+        // Put a Star inside every obstacle. Roughly 1 in 8 stars is a rare "Super Star"
+        // worth 5x the coins/score, bigger and rainbow-colored, for an extra dopamine hit.
         obstacleCount++;
+        const isSuperStar = obstacleCount > 2 && Math.random() < 0.12;
         collectables.push({
             id: obstacle.id,
             x: obstacle.x,
             y: obstacle.y,
-            radius: 14,
+            radius: isSuperStar ? 20 : 14,
             active: true,
-            isSuper: false
+            isSuper: isSuperStar
         });
 
         // Put a Color Switcher slightly below the obstacle
@@ -1416,8 +1511,8 @@ function createGame(soundEffects, currentLevel, onGameOver, onVictory) {
                 // Left fan
                 fans.push({
                     y: fanY,
-                    height: 180,
-                    strength: 0.22,
+                    height: 160,
+                    strength: 0.14,
                     bladeAngle: Math.random() * Math.PI * 2,
                     side: 'left',        // left side fan
                     isSideBySide: true,
@@ -1426,8 +1521,8 @@ function createGame(soundEffects, currentLevel, onGameOver, onVictory) {
                 // Right fan
                 fans.push({
                     y: fanY,
-                    height: 180,
-                    strength: 0.22,
+                    height: 160,
+                    strength: 0.14,
                     bladeAngle: Math.random() * Math.PI * 2,
                     side: 'right',       // right side fan
                     isSideBySide: true,
@@ -1437,7 +1532,7 @@ function createGame(soundEffects, currentLevel, onGameOver, onVictory) {
                 fans.push({
                     y: fanY,
                     height: 160,
-                    strength: 0.18,
+                    strength: 0.13,
                     bladeAngle: Math.random() * Math.PI * 2,
                     side: 'both',
                     isSideBySide: false
@@ -1452,11 +1547,12 @@ function createGame(soundEffects, currentLevel, onGameOver, onVictory) {
     }
 
     // Star Graphic Drawer
-    function drawStarShape(cx, cy, spikes, outerRadius, innerRadius) {
+    function drawStarShape(cx, cy, spikes, outerRadius, innerRadius, color) {
         let rot = Math.PI / 2 * 3;
         let x = cx;
         let y = cy;
         const step = Math.PI / spikes;
+        const fillColor = color || '#ffea00';
 
         ctx.beginPath();
         ctx.moveTo(cx, cy - outerRadius);
@@ -1473,9 +1569,9 @@ function createGame(soundEffects, currentLevel, onGameOver, onVictory) {
         }
         ctx.lineTo(cx, cy - outerRadius);
         ctx.closePath();
-        ctx.fillStyle = '#ffea00';
+        ctx.fillStyle = fillColor;
         ctx.shadowBlur = (10) * (window.SHADOW_MULT !== undefined ? window.SHADOW_MULT : 1);
-        ctx.shadowColor = '#ffea00';
+        ctx.shadowColor = fillColor;
         ctx.fill();
     }
 
@@ -1652,7 +1748,7 @@ function createGame(soundEffects, currentLevel, onGameOver, onVictory) {
                     ctx.restore();
 
                     // Downward wind particle streams from both sides
-                    if (Math.random() < 0.35) {
+                    if (Math.random() < (window.IS_MOBILE ? 0.15 : 0.35)) {
                         particles.push({ x: 20 + Math.random() * 40, y: fan.y - fan.height / 2, vx: 0.5 + Math.random(), vy: 3 + Math.random() * 2, color: 'rgba(255,120,0,0.5)', radius: 1.5 + Math.random(), alpha: 0.7, decay: 0.025 });
                         particles.push({ x: window.GAME_WIDTH - 20 - Math.random() * 40, y: fan.y - fan.height / 2, vx: -(0.5 + Math.random()), vy: 3 + Math.random() * 2, color: 'rgba(255,120,0,0.5)', radius: 1.5 + Math.random(), alpha: 0.7, decay: 0.025 });
                     }
@@ -1961,7 +2057,13 @@ function createGame(soundEffects, currentLevel, onGameOver, onVictory) {
                 score += pts;
                 scoreText.textContent = score;
                 soundEffects.playStar();
-                spawnExplosion(star.x, star.y - cameraY, '#ffea00', 24);
+                if (star.isSuper) {
+                    spawnExplosion(star.x, star.y - cameraY, '#ffea00', 20);
+                    spawnExplosion(star.x, star.y - cameraY, '#ff007f', 20);
+                    spawnExplosion(star.x, star.y - cameraY, '#00f0ff', 20);
+                } else {
+                    spawnExplosion(star.x, star.y - cameraY, '#ffea00', 24);
+                }
 
                 // Award persistent coins matching star points
                 coins += pts;
@@ -2268,8 +2370,10 @@ function createGame(soundEffects, currentLevel, onGameOver, onVictory) {
             const pColor = player.color;
             ctx.fillStyle = pColor;
             ctx.globalAlpha = p.alpha * 0.45; // softer since they are matching player color
-            ctx.shadowBlur = (4) * (window.SHADOW_MULT !== undefined ? window.SHADOW_MULT : 1);
-            ctx.shadowColor = pColor;
+            if (!window.LOW_FX) {
+                ctx.shadowBlur = (4) * (window.SHADOW_MULT !== undefined ? window.SHADOW_MULT : 1);
+                ctx.shadowColor = pColor;
+            }
             ctx.fill();
         }
         ctx.restore();
@@ -2289,7 +2393,7 @@ function createGame(soundEffects, currentLevel, onGameOver, onVictory) {
                 } else if (score >= 48 && score < 58) {
                     currentMode = 'broken_line';
                 } else if (score >= 58) {
-                    const modes = ['wind_resistance', 'balance', 'rain', 'broken_line'];
+                    const modes = ['wind_resistance', 'balance', 'rain', 'chaos', 'broken_line'];
                     const cycleIdx = Math.floor((score - 58) / 5) % modes.length;
                     currentMode = modes[cycleIdx];
                 }
@@ -2303,10 +2407,12 @@ function createGame(soundEffects, currentLevel, onGameOver, onVictory) {
             const prevBalance = isBalanceActive;
             const prevRain = isRainActive;
             const prevSideBySide = isSideBySideFanActive;
+            const prevChaos = isChaosActive;
 
             isBalanceActive = (currentMode === 'balance');
             isRainActive = (currentMode === 'rain');
             isSideBySideFanActive = (currentMode === 'wind_resistance');
+            isChaosActive = (currentMode === 'chaos') || !!(currentLevel && currentLevel.isChaos);
 
             if (isBalanceActive && !prevBalance) {
                 showChallengeBanner('⚖ BALANCE CHALLENGE', 'USE BOTH LEFT & RIGHT SIDES TO BALANCE THE BALL!');
@@ -2317,6 +2423,20 @@ function createGame(soundEffects, currentLevel, onGameOver, onVictory) {
             if (isSideBySideFanActive && !prevSideBySide) {
                 showChallengeBanner('⚡ FAN RESISTANCE ZONE', 'SIDE-BY-SIDE FANS RESIST YOU — TAP FASTER TO PUSH THROUGH!');
                 fanResistanceBannerShown = true;
+            }
+            if (isChaosActive && !prevChaos) {
+                showChallengeBanner('🎲 CHAOS COLORS', 'YOUR COLOR SWAPS ITSELF EVERY FEW SECONDS — STAY ALERT!');
+                chaosTimer = 90;
+            }
+            if (isChaosActive) {
+                chaosTimer--;
+                if (chaosTimer <= 0) {
+                    const remaining = COLORS.filter(c => c !== player.color);
+                    player.color = remaining[Math.floor(Math.random() * remaining.length)];
+                    soundEffects.playSwitch();
+                    spawnExplosion(player.x, player.y - cameraY, player.color, 16);
+                    chaosTimer = 80 + Math.floor(Math.random() * 60); // next shuffle in ~1.3-2.3s
+                }
             }
             if (score === 0 && !challengeBannerText && challengeBannerTimer === 0) {
                 if (currentLevel) {
@@ -2351,13 +2471,13 @@ function createGame(soundEffects, currentLevel, onGameOver, onVictory) {
                     if (fan.isSideBySide) {
                         // Extra resistance near the vertical center of the zone
                         const distFromCenter = Math.abs(player.y - fan.y);
-                        const centerBonus = Math.max(0, 1 - distFromCenter / (fan.height / 2)) * 0.28;
+                        const centerBonus = Math.max(0, 1 - distFromCenter / (fan.height / 2)) * 0.14;
                         appliedStrength = baseStrength + centerBonus;
                     }
                     player.vy += appliedStrength;
 
                     // Wind particles: orange for side-by-side, cyan for normal
-                    if (Math.random() < 0.3) {
+                    if (Math.random() < (window.IS_MOBILE ? 0.12 : 0.3)) {
                         particles.push({
                             x: fan.side === 'left' ? 10 + Math.random() * 60 :
                                fan.side === 'right' ? window.GAME_WIDTH - 70 + Math.random() * 60 :
@@ -2449,7 +2569,7 @@ function createGame(soundEffects, currentLevel, onGameOver, onVictory) {
             player.update();
 
             // Continuous custom trail based on equipped skin!
-            if (Math.random() < 0.35) {
+            if (Math.random() < (window.IS_MOBILE ? 0.15 : 0.35)) {
                 let trailRadius = player.radius * 0.45;
                 let decayVal = 0.045;
                 if (activeSkin === 'vortex_star') {
@@ -2533,14 +2653,19 @@ function createGame(soundEffects, currentLevel, onGameOver, onVictory) {
             if (star.active) {
                 ctx.save();
                 ctx.translate(star.x, star.y - cameraY);
-                // Spin animation
-                const starRotation = (Date.now() / 400) % (Math.PI * 2);
+                // Super stars spin faster and pulse harder to stand out
+                const starRotation = (Date.now() / (star.isSuper ? 220 : 400)) % (Math.PI * 2);
                 ctx.rotate(starRotation);
-                // Pulse animation
-                const pulse = Math.sin(Date.now() / 120) * 2.5;
+                const pulse = Math.sin(Date.now() / (star.isSuper ? 90 : 120)) * (star.isSuper ? 4 : 2.5);
                 const rOuter = star.radius + pulse;
                 const rInner = (star.radius / 2) + (pulse / 2);
-                drawStarShape(0, 0, 5, rOuter, rInner);
+                if (star.isSuper) {
+                    // Rainbow hue cycling color for the rare bonus star
+                    const hue = (Date.now() / 6) % 360;
+                    drawStarShape(0, 0, 5, rOuter, rInner, `hsl(${hue}, 100%, 60%)`);
+                } else {
+                    drawStarShape(0, 0, 5, rOuter, rInner);
+                }
                 ctx.restore();
             }
         }

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Keleme</title>
+    <title>Color Twist</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -26,13 +26,29 @@
 
     <!-- Main Menu -->
     <div id="main-menu" class="screen">
-        <div class="menu-content">
-            <h1 class="game-title">Keleme</h1>
+        <div class="menu-decorations">
+            <div class="decor-circle circle-1"></div>
+            <div class="decor-circle circle-2"></div>
+            <div class="decor-circle circle-3"></div>
+            <div class="menu-ring ring-1"></div>
+            <div class="menu-ring ring-2"></div>
+        </div>
+        <div class="menu-content" style="z-index: 2;">
+            <h1 class="game-title">
+                <span class="word-color">Color</span><br>
+                <span class="word-twist">Twist</span>
+            </h1>
             <p class="game-description">Let's play with colors</p>
             
+            <div class="coin-hud-menu" style="display: flex; align-items: center; justify-content: center; gap: 8px; margin-bottom: 20px; font-weight: 900; color: var(--neon-yellow); font-size: 1.2rem; text-shadow: 0 0 10px rgba(255, 234, 0, 0.5);">
+                <span class="coin-star">★</span>
+                <span id="menu-coin-count">0</span> COINS
+            </div>
+            
             <div class="menu-controls">
-                <button id="free-play-btn" class="btn btn-primary" data-tag="free_play_button">FREE PLAY</button>
+                <button id="free-play-btn" class="btn btn-primary btn-free-play" data-tag="free_play_button">FREE PLAY</button>
                 <button id="levels-btn" class="btn btn-primary btn-challenges" data-tag="levels_button">CHALLENGES</button>
+                <button id="shop-btn" class="btn btn-primary btn-shop" data-tag="shop_button" style="background: linear-gradient(135deg, #a855f7 0%, #7c3aed 100%); border-color: #c084fc; box-shadow: 0 4px 15px rgba(168, 85, 247, 0.45);">SKINS SHOP</button>
                 
                 <div class="sound-toggle-container">
                     <span class="toggle-label">SOUND</span>
@@ -57,9 +73,42 @@
         </div>
     </div>
 
+    <!-- Skins Shop Screen -->
+    <div id="shop-screen" class="screen">
+        <div class="menu-content select-content">
+            <h2 class="levels-title" style="color: #a855f7; text-shadow: 0 0 15px rgba(168, 85, 247, 0.65);">SKINS SHOP</h2>
+            
+            <!-- Coins Display -->
+            <div class="shop-coin-display" style="color: var(--neon-yellow); font-size: 1.2rem; font-weight: 900; margin-bottom: 15px; text-shadow: 0 0 10px rgba(255, 234, 0, 0.4);">
+                ★ <span id="shop-coin-count">0</span> COINS
+            </div>
+
+            <!-- Skin Live Preview Canvas -->
+            <div class="skin-preview-container" style="width: 100px; height: 100px; margin: 0 auto 16px; background: rgba(13, 13, 20, 0.85); border: 2px solid #a855f7; border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 0 20px rgba(168, 85, 247, 0.3);">
+                <canvas id="shop-preview-canvas" width="80" height="80"></canvas>
+            </div>
+            
+            <p id="shop-preview-name" style="color: #c084fc; font-weight: bold; font-size: 1.1rem; margin-top: -10px; margin-bottom: 15px; text-shadow: 0 0 8px rgba(168, 85, 247, 0.4); text-transform: uppercase;">STANDARD ORB</p>
+
+            <div id="shop-skins-list" class="levels-grid" style="max-height: 28vh; overflow-y: auto; padding-right: 4px; margin-bottom: 20px;">
+                <!-- Dynamically populated in script.js -->
+            </div>
+            
+            <button id="shop-back-btn" class="btn btn-secondary" data-tag="shop_back_button">BACK TO MENU</button>
+        </div>
+    </div>
+
     <!-- Gameplay Screen -->
     <div id="game-container" class="screen">
         <canvas id="game-canvas"></canvas>
+        
+        <!-- Pause Button (Top Right Corner) -->
+        <button id="pause-btn" class="pause-btn" data-tag="pause_button" title="Pause Game">
+            <svg viewBox="0 0 24 24" class="pause-icon">
+                <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z" fill="currentColor"/>
+            </svg>
+        </button>
+
         <div id="score-hud">
             <div class="score-box">
                 <span class="score-label" style="color: #64748b;">SCORE</span>
@@ -88,6 +137,19 @@
                 <div class="modal-controls">
                     <button id="modal-continue-btn" class="btn btn-primary" data-tag="modal_continue_button">CONTINUE</button>
                     <button id="modal-new-game-btn" class="btn btn-secondary" data-tag="modal_new_game_button">NEW GAME</button>
+                    <button id="modal-quit-btn" class="btn btn-secondary" style="background: rgba(220, 38, 38, 0.25); border-color: #ef4444; color: #fca5a5;" data-tag="modal_quit_button">QUIT TO MENU</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Pause Modal Popup -->
+        <div id="pause-modal" class="modal-overlay" style="display: none;">
+            <div class="modal-content" style="border-color: var(--neon-cyan); box-shadow: 0 0 30px rgba(0, 240, 255, 0.25);">
+                <h3 class="modal-title" style="color: var(--neon-cyan); text-shadow: 0 0 10px rgba(0, 240, 255, 0.6);">PAUSED</h3>
+                <p class="modal-desc">The game is currently paused.</p>
+                <div class="modal-controls">
+                    <button id="modal-resume-btn" class="btn btn-primary" style="background: linear-gradient(135deg, var(--neon-cyan) 0%, #0284c7 100%); box-shadow: 0 4px 15px rgba(0, 240, 255, 0.45); border-color: var(--neon-cyan);" data-tag="modal_resume_button">RESUME GAME</button>
+                    <button id="modal-pause-quit-btn" class="btn btn-secondary" style="background: rgba(220, 38, 38, 0.25); border-color: #ef4444; color: #fca5a5;" data-tag="modal_pause_quit_button">QUIT TO MENU</button>
                 </div>
             </div>
         </div>
@@ -138,6 +200,6 @@
         </div>
     </div>
 
-    <script src="script.js"></script>
+    <script type="module" src="script.js"></script>
 </body>
 </html>
