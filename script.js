@@ -288,9 +288,9 @@ const LEVELS = [
     {
         id: 18,
         name: "Prism Slide",
-        description: "Sliding broken lines plus double circles!",
+        description: "Sliding diamonds and double circles!",
         targetScore: 18,
-        types: ['broken_line', 'double_circle'],
+        types: ['sliding_diamond', 'double_circle'],
         speedMultiplier: 1.3
     },
     {
@@ -332,9 +332,9 @@ const LEVELS = [
     {
         id: 23,
         name: "Storm Gusts",
-        description: "Heavy wind gusts plus double circles!",
+        description: "Heavy wind gusts plus triple rings!",
         targetScore: 18,
-        types: ['circle', 'double_circle'],
+        types: ['circle', 'triple_concentric'],
         speedMultiplier: 1.25,
         hasFans: true
     },
@@ -371,7 +371,7 @@ const LEVELS = [
         name: "Eternal Champion",
         description: "Every obstacle shape returns, and you must balance through them all!",
         targetScore: 22,
-        types: ['circle', 'square', 'double_circle', 'broken_line', 'cross'],
+        types: ['circle', 'square', 'double_circle', 'broken_line', 'cross', 'sliding_diamond', 'triple_concentric', 'pulsing_circle'],
         speedMultiplier: 1.35,
         isBalance: true
     },
@@ -380,7 +380,7 @@ const LEVELS = [
         name: "Ultimate Gauntlet",
         description: "The final trial: side-fan resistance plus chaos colors. Survive it all!",
         targetScore: 24,
-        types: ['circle', 'square', 'double_circle', 'broken_line', 'cross'],
+        types: ['circle', 'square', 'double_circle', 'broken_line', 'cross', 'sliding_diamond', 'triple_concentric', 'pulsing_circle'],
         speedMultiplier: 1.4,
         hasFans: true,
         hasSideBySideFans: true,
@@ -1438,7 +1438,7 @@ function createGame(soundEffects, currentLevel, onGameOver, onVictory) {
             allowedTypes = currentLevel.types;
         } else {
             // Free play: full variety from the very first obstacle
-            allowedTypes = ['circle', 'square', 'double_circle', 'cross', 'broken_line'];
+            allowedTypes = ['circle', 'square', 'double_circle', 'cross', 'broken_line', 'sliding_diamond', 'triple_concentric', 'pulsing_circle'];
         }
 
         // Never spawn the same obstacle type twice in a row (when variety is available) so
@@ -1465,10 +1465,13 @@ function createGame(soundEffects, currentLevel, onGameOver, onVictory) {
             rotation: Math.random() * Math.PI * 2,
             speed: speedVal * (Math.random() > 0.5 ? 1 : -1),
             thickness: type === 'broken_line' ? 16 : 14,
-            // Broken line oscillation: shifts left-right sinusoidally
+            // Slide / Oscillation shifts left-right sinusoidally
             oscPhase: Math.random() * Math.PI * 2,
-            oscSpeed: (0.018 + Math.random() * 0.012) * (Math.random() > 0.5 ? 1 : -1),
-            oscAmplitude: 55 + Math.random() * 40
+            oscSpeed: (type === 'sliding_diamond' ? 0.014 + Math.random() * 0.008 : 0.018 + Math.random() * 0.012) * (Math.random() > 0.5 ? 1 : -1),
+            oscAmplitude: type === 'sliding_diamond' ? 35 + Math.random() * 25 : 55 + Math.random() * 40,
+            // Pulsing state
+            pulsePhase: Math.random() * Math.PI * 2,
+            pulseSpeed: 0.035 + Math.random() * 0.02
         };
 
         obstacles.push(obstacle);
@@ -1616,12 +1619,12 @@ function createGame(soundEffects, currentLevel, onGameOver, onVictory) {
             }
         }
         else if (obs.type === 'double_circle') {
-            // Inner ring (rotates backwards)
+            // Inner ring (rotates in the same direction to keep color segments aligned)
             ctx.lineWidth = obs.thickness - 2;
-            const rInner = obs.radius - 22;
+            const rInner = obs.radius - 28;
             for (let i = 0; i < 4; i++) {
                 ctx.beginPath();
-                const startAngle = -obs.rotation + i * Math.PI / 2;
+                const startAngle = obs.rotation + i * Math.PI / 2;
                 const endAngle = startAngle + Math.PI / 2;
                 ctx.arc(cx, cy, rInner, startAngle, endAngle);
                 ctx.strokeStyle = COLORS[i];
@@ -1644,8 +1647,8 @@ function createGame(soundEffects, currentLevel, onGameOver, onVictory) {
             for (let i = 0; i < 4; i++) {
                 ctx.beginPath();
                 const angle = obs.rotation + i * Math.PI / 2;
-                const startX = cx + Math.cos(angle) * 20; // Gap in center
-                const startY = cy + Math.sin(angle) * 20;
+                const startX = cx + Math.cos(angle) * 36; // Gap in center increased from 20 to 36
+                const startY = cy + Math.sin(angle) * 36;
                 const endX = cx + Math.cos(angle) * obs.radius;
                 const endY = cy + Math.sin(angle) * obs.radius;
 
@@ -1680,24 +1683,90 @@ function createGame(soundEffects, currentLevel, onGameOver, onVictory) {
             ctx.lineWidth = obs.thickness;
             const segmentWidth = 110;
             const totalWidth = segmentWidth * 4;
-            // Slide: rotation-based horizontal scroll
-            const slideX = (obs.rotation * 150) % totalWidth;
-            // Oscillation: sinusoidal left/right shift
-            const oscOff = obs.oscOffset || 0;
-
-            // On mobile draw a single copy; desktop draws 3 for seamless wrapping
-            const copyMin = window.LOW_FX ? 0 : -1;
-            const copyMax = window.LOW_FX ? 0 : 1;
-            for (let copy = copyMin; copy <= copyMax; copy++) {
-                const baseStartX = cx + slideX + oscOff + copy * totalWidth - totalWidth / 2;
+            const A = cx + (obs.rotation * 150) + (obs.oscOffset || 0);
+            const startXBase = ((A % totalWidth) + totalWidth) % totalWidth - totalWidth;
+            
+            // Draw tiled copies to cover screen width seamlessly
+            for (let x = startXBase - totalWidth; x < window.GAME_WIDTH + totalWidth; x += totalWidth) {
                 for (let i = 0; i < 4; i++) {
                     ctx.beginPath();
-                    ctx.moveTo(baseStartX + i * segmentWidth, cy);
-                    ctx.lineTo(baseStartX + (i + 1) * segmentWidth, cy);
+                    ctx.moveTo(x + i * segmentWidth, cy);
+                    ctx.lineTo(x + (i + 1) * segmentWidth, cy);
                     ctx.strokeStyle = COLORS[i];
                     applyGlow(8, COLORS[i]);
                     ctx.stroke();
                 }
+            }
+        }
+        else if (obs.type === 'sliding_diamond') {
+            ctx.lineWidth = obs.thickness || 14;
+            const size = (obs.radius || 84) * 1.1;
+            const slideX = obs.oscOffset || 0;
+            const dcx = cx + slideX;
+            for (let i = 0; i < 4; i++) {
+                const a1 = obs.rotation + i * Math.PI / 2;
+                const a2 = obs.rotation + (i + 1) * Math.PI / 2;
+                const x1 = dcx + Math.cos(a1) * size;
+                const y1 = cy + Math.sin(a1) * size;
+                const x2 = dcx + Math.cos(a2) * size;
+                const y2 = cy + Math.sin(a2) * size;
+
+                ctx.beginPath();
+                ctx.moveTo(x1, y1);
+                ctx.lineTo(x2, y2);
+                ctx.strokeStyle = COLORS[i];
+                applyGlow(8, COLORS[i]);
+                ctx.stroke();
+            }
+        }
+        else if (obs.type === 'triple_concentric') {
+            // Inner ring (rotates clockwise)
+            ctx.lineWidth = (obs.thickness || 14) - 3;
+            const rInner = 44;
+            for (let i = 0; i < 4; i++) {
+                ctx.beginPath();
+                const startAngle = obs.rotation + i * Math.PI / 2;
+                const endAngle = startAngle + Math.PI / 2;
+                ctx.arc(cx, cy, rInner, startAngle, endAngle);
+                ctx.strokeStyle = COLORS[i];
+                ctx.stroke();
+            }
+            // Middle ring (rotates counter-clockwise, visual effect only)
+            ctx.lineWidth = (obs.thickness || 14) - 2;
+            const rMiddle = 64;
+            for (let i = 0; i < 4; i++) {
+                ctx.beginPath();
+                const startAngle = -obs.rotation + i * Math.PI / 2;
+                const endAngle = startAngle + Math.PI / 2;
+                ctx.arc(cx, cy, rMiddle, startAngle, endAngle);
+                ctx.strokeStyle = COLORS[i];
+                ctx.stroke();
+            }
+            // Outer ring (rotates clockwise)
+            ctx.lineWidth = obs.thickness || 14;
+            const rOuter = 84;
+            for (let i = 0; i < 4; i++) {
+                ctx.beginPath();
+                const startAngle = obs.rotation + i * Math.PI / 2;
+                const endAngle = startAngle + Math.PI / 2;
+                ctx.arc(cx, cy, rOuter, startAngle, endAngle);
+                ctx.strokeStyle = COLORS[i];
+                applyGlow(8, COLORS[i]);
+                ctx.stroke();
+            }
+        }
+        else if (obs.type === 'pulsing_circle') {
+            ctx.lineWidth = obs.thickness || 14;
+            const pulse = Math.sin(obs.pulsePhase || 0) * 18;
+            const rPulsing = (obs.radius || 84) + pulse;
+            for (let i = 0; i < 4; i++) {
+                ctx.beginPath();
+                const startAngle = obs.rotation + i * Math.PI / 2;
+                const endAngle = startAngle + Math.PI / 2;
+                ctx.arc(cx, cy, rPulsing, startAngle, endAngle);
+                ctx.strokeStyle = COLORS[i];
+                applyGlow(8, COLORS[i]);
+                ctx.stroke();
             }
         }
 
@@ -2141,11 +2210,11 @@ function createGame(soundEffects, currentLevel, onGameOver, onVictory) {
                     }
                 }
 
-                // Ring 2 (Inner Ring, backward rotation)
-                const rInner = obs.radius - 22;
+                // Ring 2 (Inner Ring, rotates in the same direction)
+                const rInner = obs.radius - 28;
                 if (Math.abs(dist - rInner) < (player.radius + halfThick)) {
                     const angle = Math.atan2(player.y - obs.y, player.x - obs.x);
-                    let relAngle = (angle - (-obs.rotation)) % (Math.PI * 2);
+                    let relAngle = (angle - obs.rotation) % (Math.PI * 2);
                     if (relAngle < 0) relAngle += Math.PI * 2;
                     const segIdx = Math.floor(relAngle / (Math.PI / 2)) % 4;
                     if (COLORS[segIdx] !== player.color) {
@@ -2168,8 +2237,8 @@ function createGame(soundEffects, currentLevel, onGameOver, onVictory) {
 
                     // Project player relative coord on spoke vector
                     let proj = relX * cosA + relY * sinA;
-                    // Cap projection length between inner gap (20) and spoke radius
-                    proj = Math.max(20, Math.min(obs.radius, proj));
+                    // Cap projection length between inner gap (increased to 36) and spoke radius
+                    proj = Math.max(36, Math.min(obs.radius, proj));
 
                     const closestX = obs.x + proj * cosA;
                     const closestY = obs.y + proj * sinA;
@@ -2231,6 +2300,85 @@ function createGame(soundEffects, currentLevel, onGameOver, onVictory) {
                     const contactColor = COLORS[segIdx];
 
                     if (contactColor !== player.color) {
+                        triggerGameOver();
+                        return;
+                    }
+                }
+            }
+            else if (obs.type === 'sliding_diamond') {
+                const halfThick = obs.thickness / 2;
+                const size = obs.radius * 1.1;
+                const slideX = obs.oscOffset || 0;
+                const dcx = obs.x + slideX;
+                for (let i = 0; i < 4; i++) {
+                    const a1 = obs.rotation + i * Math.PI / 2;
+                    const a2 = obs.rotation + (i + 1) * Math.PI / 2;
+
+                    const x1 = dcx + Math.cos(a1) * size;
+                    const y1 = obs.y + Math.sin(a1) * size;
+                    const x2 = dcx + Math.cos(a2) * size;
+                    const y2 = obs.y + Math.sin(a2) * size;
+
+                    const dx = x2 - x1;
+                    const dy = y2 - y1;
+                    const segmentLenSq = dx * dx + dy * dy;
+
+                    let t = ((player.x - x1) * dx + (player.y - y1) * dy) / segmentLenSq;
+                    t = Math.max(0, Math.min(1, t));
+
+                    const closestX = x1 + t * dx;
+                    const closestY = y1 + t * dy;
+
+                    const distToSegment = Math.hypot(player.x - closestX, player.y - closestY);
+                    if (distToSegment < player.radius + halfThick) {
+                        if (COLORS[i] !== player.color) {
+                            triggerGameOver();
+                            return;
+                        }
+                    }
+                }
+            }
+            else if (obs.type === 'triple_concentric') {
+                const dist = Math.hypot(player.x - obs.x, player.y - obs.y);
+                const halfThick = obs.thickness / 2;
+
+                // Ring 1 (Outer Ring, radius 84, rotates clockwise)
+                if (Math.abs(dist - 84) < (player.radius + halfThick)) {
+                    const angle = Math.atan2(player.y - obs.y, player.x - obs.x);
+                    let relAngle = (angle - obs.rotation) % (Math.PI * 2);
+                    if (relAngle < 0) relAngle += Math.PI * 2;
+                    const segIdx = Math.floor(relAngle / (Math.PI / 2)) % 4;
+                    if (COLORS[segIdx] !== player.color) {
+                        triggerGameOver();
+                        return;
+                    }
+                }
+
+                // Ring 2 (Inner Ring, radius 44, rotates clockwise)
+                // Note: Middle ring (radius 64) has no collision for addictive, fair gameplay
+                if (Math.abs(dist - 44) < (player.radius + halfThick - 1.5)) {
+                    const angle = Math.atan2(player.y - obs.y, player.x - obs.x);
+                    let relAngle = (angle - obs.rotation) % (Math.PI * 2);
+                    if (relAngle < 0) relAngle += Math.PI * 2;
+                    const segIdx = Math.floor(relAngle / (Math.PI / 2)) % 4;
+                    if (COLORS[segIdx] !== player.color) {
+                        triggerGameOver();
+                        return;
+                    }
+                }
+            }
+            else if (obs.type === 'pulsing_circle') {
+                const dist = Math.hypot(player.x - obs.x, player.y - obs.y);
+                const halfThick = obs.thickness / 2;
+                const pulse = Math.sin(obs.pulsePhase || 0) * 18;
+                const rPulsing = obs.radius + pulse;
+
+                if (Math.abs(dist - rPulsing) < (player.radius + halfThick)) {
+                    const angle = Math.atan2(player.y - obs.y, player.x - obs.x);
+                    let relAngle = (angle - obs.rotation) % (Math.PI * 2);
+                    if (relAngle < 0) relAngle += Math.PI * 2;
+                    const segIdx = Math.floor(relAngle / (Math.PI / 2)) % 4;
+                    if (COLORS[segIdx] !== player.color) {
                         triggerGameOver();
                         return;
                     }
@@ -2460,10 +2608,14 @@ function createGame(soundEffects, currentLevel, onGameOver, onVictory) {
             // Update Entity rotations
             for (let obs of obstacles) {
                 obs.rotation += obs.speed;
-                // Oscillate broken_line obstacles left and right
-                if (obs.type === 'broken_line') {
+                // Oscillate broken_line and sliding_diamond obstacles left and right
+                if (obs.type === 'broken_line' || obs.type === 'sliding_diamond') {
                     obs.oscPhase = (obs.oscPhase || 0) + (obs.oscSpeed || 0.022);
                     obs.oscOffset = Math.sin(obs.oscPhase) * (obs.oscAmplitude || 60);
+                }
+                // Pulsing circle pulse state
+                if (obs.type === 'pulsing_circle') {
+                    obs.pulsePhase = (obs.pulsePhase || 0) + (obs.pulseSpeed || 0.045);
                 }
             }
             for (let sw of switchers) {
