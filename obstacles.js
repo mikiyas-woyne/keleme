@@ -1,4 +1,4 @@
-﻿/**
+/**
  * Color Twist - Modular Obstacle Framework
  * This file contains the complete Obstacle Registry and Obstacle Manager.
  * It provides 50+ custom obstacle types across 10 distinct categories.
@@ -572,7 +572,9 @@ registerObstacle('laser_grid', {
         for (let i = 0; i < 3; i++) {
             const yPos = obs.y - 40 + i * 40 + drift;
             if (Math.abs(player.y - yPos) < player.radius + 4) {
-                if (OBSTACLE_COLORS[i % 4] !== player.color) return true;
+                if (player.x > 30 - player.radius && player.x < window.GAME_WIDTH - 30 + player.radius) {
+                    if (OBSTACLE_COLORS[i % 4] !== player.color) return true;
+                }
             }
         }
         return false;
@@ -1335,6 +1337,7 @@ registerObstacle('living_ghost', {
     update: function (obs, player) {
         // Slow tracking towards player horizontal pos
         obs.gx += (player.x - obs.gx) * 0.02;
+        obs.eyeColorIdx = Math.floor((Date.now() / 400) % 4);
     },
     draw: function (ctx, obs, cameraY) {
         const cy = obs.y - cameraY;
@@ -1355,7 +1358,8 @@ registerObstacle('living_ghost', {
         ctx.stroke();
 
         // Colored shifting eyes
-        const eyeColor = OBSTACLE_COLORS[Math.floor((Date.now() / 400) % 4)];
+        const eyeColorIdx = obs.eyeColorIdx !== undefined ? obs.eyeColorIdx : 0;
+        const eyeColor = OBSTACLE_COLORS[eyeColorIdx];
         ctx.fillStyle = eyeColor;
         ObstacleUtils.applyGlow(ctx, eyeColor, 8);
         ctx.beginPath();
@@ -1366,7 +1370,8 @@ registerObstacle('living_ghost', {
     },
     checkCollision: function (obs, player) {
         if (Math.hypot(player.x - obs.gx, player.y - obs.gy) < player.radius + 24) {
-            const eyeColor = OBSTACLE_COLORS[Math.floor((Date.now() / 400) % 4)];
+            const eyeColorIdx = obs.eyeColorIdx !== undefined ? obs.eyeColorIdx : 0;
+            const eyeColor = OBSTACLE_COLORS[eyeColorIdx];
             if (player.color !== eyeColor) return true;
         }
         return false;
@@ -1432,28 +1437,55 @@ registerObstacle('motion_zigzag', {
     },
     draw: function (ctx, obs, cameraY) {
         const cy = obs.y - cameraY;
+        const size = 35;
         ctx.save();
         ctx.translate(obs.sx, cy);
         ctx.rotate(obs.rotation);
 
         for (let i = 0; i < 4; i++) {
+            const a1 = i * Math.PI / 2;
+            const a2 = (i + 1) * Math.PI / 2;
+            const x1 = Math.cos(a1) * size;
+            const y1 = Math.sin(a1) * size;
+            const x2 = Math.cos(a2) * size;
+            const y2 = Math.sin(a2) * size;
+
+            ctx.beginPath();
+            ctx.moveTo(x1, y1);
+            ctx.lineTo(x2, y2);
             ctx.strokeStyle = OBSTACLE_COLORS[i];
             ctx.lineWidth = 6;
             ObstacleUtils.applyGlow(ctx, OBSTACLE_COLORS[i], 10);
-            ctx.strokeRect(-25, -25, 50, 50);
+            ctx.stroke();
         }
         ctx.restore();
     },
     checkCollision: function (obs, player) {
         const halfThick = 3;
         const size = 35;
-        // Simple bounding box checks
-        if (Math.hypot(player.x - obs.sx, player.y - obs.y) < player.radius + size) {
-            const angle = Math.atan2(player.y - obs.y, player.x - obs.sx);
-            let rel = (angle - obs.rotation) % (Math.PI * 2);
-            if (rel < 0) rel += Math.PI * 2;
-            const idx = Math.floor(rel / (Math.PI / 2)) % 4;
-            if (OBSTACLE_COLORS[idx] !== player.color) return true;
+        for (let i = 0; i < 4; i++) {
+            const a1 = obs.rotation + i * Math.PI / 2;
+            const a2 = obs.rotation + (i + 1) * Math.PI / 2;
+            const x1 = obs.sx + Math.cos(a1) * size;
+            const y1 = obs.y + Math.sin(a1) * size;
+            const x2 = obs.sx + Math.cos(a2) * size;
+            const y2 = obs.y + Math.sin(a2) * size;
+
+            const dx = x2 - x1;
+            const dy = y2 - y1;
+            const segmentLenSq = dx * dx + dy * dy;
+            if (segmentLenSq === 0) continue;
+
+            let t = ((player.x - x1) * dx + (player.y - y1) * dy) / segmentLenSq;
+            t = Math.max(0, Math.min(1, t));
+
+            const closestX = x1 + t * dx;
+            const closestY = y1 + t * dy;
+
+            const distToSegment = Math.hypot(player.x - closestX, player.y - closestY);
+            if (distToSegment < player.radius + halfThick) {
+                if (OBSTACLE_COLORS[i] !== player.color) return true;
+            }
         }
         return false;
     }
@@ -2236,7 +2268,7 @@ registerObstacle('boss_dragon', {
         const dist = Math.hypot(player.x - obs.x, player.y - obs.y);
         if (Math.abs(dist - 80) < player.radius + 16) {
             const angle = Math.atan2(player.y - obs.y, player.x - obs.x);
-            let rel = (angle - obs.rot) % (Math.PI * 2);
+            let rel = (obs.rot - angle) % (Math.PI * 2);
             if (rel < 0) rel += Math.PI * 2;
 
             // Check collision with head segment (always lethal unless invulnerable)
