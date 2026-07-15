@@ -332,9 +332,9 @@ const LEVELS = [
     {
         id: 23,
         name: "Storm Gusts",
-        description: "Heavy wind gusts plus triple rings!",
+        description: "Heavy wind gusts plus faster rotating rings!",
         targetScore: 18,
-        types: ['circle', 'triple_concentric'],
+        types: ['circle'],
         speedMultiplier: 1.25,
         hasFans: true
     },
@@ -371,7 +371,7 @@ const LEVELS = [
         name: "Eternal Champion",
         description: "Every obstacle shape returns, and you must balance through them all!",
         targetScore: 22,
-        types: ['circle', 'square', 'double_circle', 'broken_line', 'cross', 'sliding_diamond', 'triple_concentric', 'pulsing_circle'],
+        types: ['circle', 'square', 'double_circle', 'broken_line', 'cross', 'sliding_diamond', 'pulsing_circle'],
         speedMultiplier: 1.35,
         isBalance: true
     },
@@ -380,7 +380,7 @@ const LEVELS = [
         name: "Ultimate Gauntlet",
         description: "The final trial: side-fan resistance plus chaos colors. Survive it all!",
         targetScore: 24,
-        types: ['circle', 'square', 'double_circle', 'broken_line', 'cross', 'sliding_diamond', 'triple_concentric', 'pulsing_circle'],
+        types: ['circle', 'square', 'double_circle', 'broken_line', 'cross', 'sliding_diamond', 'pulsing_circle'],
         speedMultiplier: 1.4,
         hasFans: true,
         hasSideBySideFans: true,
@@ -918,7 +918,7 @@ function createGame(soundEffects, currentLevel, onGameOver, onVictory) {
     }
 
     function getInitialObstacleCount() {
-        return currentLevel ? 3 : 6;
+        return currentLevel ? (window.IS_MOBILE ? 2 : 3) : (window.IS_MOBILE ? 4 : 6);
     }
 
     // Neon Arc Colors Palette
@@ -1396,7 +1396,7 @@ function createGame(soundEffects, currentLevel, onGameOver, onVictory) {
         }
     }
 
-    const MAX_PARTICLES = window.IS_MOBILE ? 45 : 220;
+    const MAX_PARTICLES = window.LOW_FX ? 24 : (window.IS_MOBILE ? 45 : 220);
 
     function updateAndDrawParticles() {
         // Hard cap so a burst of explosions/trails can never pile up into a lag spike
@@ -1428,7 +1428,7 @@ function createGame(soundEffects, currentLevel, onGameOver, onVictory) {
 
 
     function generateNextObstacle() {
-        const spacing = currentLevel ? 420 : 340; // tighter gaps in free play
+        const spacing = currentLevel ? (window.IS_MOBILE ? 500 : 420) : (window.IS_MOBILE ? 500 : 340); // tighter gaps in free play
         const spawnY = highestYGenerated - spacing;
         highestYGenerated = spawnY;
 
@@ -1438,7 +1438,7 @@ function createGame(soundEffects, currentLevel, onGameOver, onVictory) {
             allowedTypes = currentLevel.types;
         } else {
             // Free play: full variety from the very first obstacle
-            allowedTypes = ['circle', 'square', 'double_circle', 'cross', 'broken_line', 'sliding_diamond', 'triple_concentric', 'pulsing_circle'];
+            allowedTypes = ['circle', 'square', 'double_circle', 'cross', 'broken_line', 'sliding_diamond', 'pulsing_circle'];
         }
 
         // Never spawn the same obstacle type twice in a row (when variety is available) so
@@ -1647,7 +1647,7 @@ function createGame(soundEffects, currentLevel, onGameOver, onVictory) {
             for (let i = 0; i < 4; i++) {
                 ctx.beginPath();
                 const angle = obs.rotation + i * Math.PI / 2;
-                const startX = cx + Math.cos(angle) * 36; // Gap in center increased from 20 to 36
+                const startX = cx + Math.cos(angle) * 54; // wider safe center for fairer cross passes
                 const startY = cy + Math.sin(angle) * 36;
                 const endX = cx + Math.cos(angle) * obs.radius;
                 const endY = cy + Math.sin(angle) * obs.radius;
@@ -1714,42 +1714,6 @@ function createGame(soundEffects, currentLevel, onGameOver, onVictory) {
                 ctx.beginPath();
                 ctx.moveTo(x1, y1);
                 ctx.lineTo(x2, y2);
-                ctx.strokeStyle = COLORS[i];
-                applyGlow(8, COLORS[i]);
-                ctx.stroke();
-            }
-        }
-        else if (obs.type === 'triple_concentric') {
-            // Inner ring (rotates clockwise)
-            ctx.lineWidth = (obs.thickness || 14) - 3;
-            const rInner = 44;
-            for (let i = 0; i < 4; i++) {
-                ctx.beginPath();
-                const startAngle = obs.rotation + i * Math.PI / 2;
-                const endAngle = startAngle + Math.PI / 2;
-                ctx.arc(cx, cy, rInner, startAngle, endAngle);
-                ctx.strokeStyle = COLORS[i];
-                ctx.stroke();
-            }
-            // Middle ring (rotates counter-clockwise, visual effect only)
-            ctx.lineWidth = (obs.thickness || 14) - 2;
-            const rMiddle = 64;
-            for (let i = 0; i < 4; i++) {
-                ctx.beginPath();
-                const startAngle = -obs.rotation + i * Math.PI / 2;
-                const endAngle = startAngle + Math.PI / 2;
-                ctx.arc(cx, cy, rMiddle, startAngle, endAngle);
-                ctx.strokeStyle = COLORS[i];
-                ctx.stroke();
-            }
-            // Outer ring (rotates clockwise)
-            ctx.lineWidth = obs.thickness || 14;
-            const rOuter = 84;
-            for (let i = 0; i < 4; i++) {
-                ctx.beginPath();
-                const startAngle = obs.rotation + i * Math.PI / 2;
-                const endAngle = startAngle + Math.PI / 2;
-                ctx.arc(cx, cy, rOuter, startAngle, endAngle);
                 ctx.strokeStyle = COLORS[i];
                 applyGlow(8, COLORS[i]);
                 ctx.stroke();
@@ -2224,7 +2188,7 @@ function createGame(soundEffects, currentLevel, onGameOver, onVictory) {
                 }
             }
             else if (obs.type === 'cross') {
-                const halfThick = obs.thickness / 2;
+                const halfThick = Math.max(4, obs.thickness / 2 - 1);
                 // Check collision against each of the 4 spoke lines
                 for (let i = 0; i < 4; i++) {
                     const angle = obs.rotation + i * Math.PI / 2;
@@ -2237,8 +2201,8 @@ function createGame(soundEffects, currentLevel, onGameOver, onVictory) {
 
                     // Project player relative coord on spoke vector
                     let proj = relX * cosA + relY * sinA;
-                    // Cap projection length between inner gap (increased to 36) and spoke radius
-                    proj = Math.max(36, Math.min(obs.radius, proj));
+                    // Cap projection length between a wider safe center and the spoke radius
+                    proj = Math.max(54, Math.min(obs.radius - 10, proj));
 
                     const closestX = obs.x + proj * cosA;
                     const closestY = obs.y + proj * sinA;
@@ -2253,8 +2217,8 @@ function createGame(soundEffects, currentLevel, onGameOver, onVictory) {
                 }
             }
             else if (obs.type === 'square') {
-                const halfThick = obs.thickness / 2;
-                const size = obs.radius * 1.3;
+                const halfThick = Math.max(4, obs.thickness / 2 - 1.5);
+                const size = obs.radius * 1.16;
 
                 // Check each of the 4 line segments of the square
                 for (let i = 0; i < 4; i++) {
@@ -2287,7 +2251,7 @@ function createGame(soundEffects, currentLevel, onGameOver, onVictory) {
                 }
             }
             else if (obs.type === 'broken_line') {
-                const halfThick = obs.thickness / 2;
+                const halfThick = Math.max(5, obs.thickness / 2 - 2);
                 // Since this is a horizontal bar, check collision if the player overlaps vertically
                 const distY = Math.abs(player.y - obs.y);
                 if (distY < player.radius + halfThick) {
@@ -2306,8 +2270,8 @@ function createGame(soundEffects, currentLevel, onGameOver, onVictory) {
                 }
             }
             else if (obs.type === 'sliding_diamond') {
-                const halfThick = obs.thickness / 2;
-                const size = obs.radius * 1.1;
+                const halfThick = Math.max(4, obs.thickness / 2 - 2);
+                const size = obs.radius * 0.98;
                 const slideX = obs.oscOffset || 0;
                 const dcx = obs.x + slideX;
                 for (let i = 0; i < 4; i++) {
@@ -2335,35 +2299,6 @@ function createGame(soundEffects, currentLevel, onGameOver, onVictory) {
                             triggerGameOver();
                             return;
                         }
-                    }
-                }
-            }
-            else if (obs.type === 'triple_concentric') {
-                const dist = Math.hypot(player.x - obs.x, player.y - obs.y);
-                const halfThick = obs.thickness / 2;
-
-                // Ring 1 (Outer Ring, radius 84, rotates clockwise)
-                if (Math.abs(dist - 84) < (player.radius + halfThick)) {
-                    const angle = Math.atan2(player.y - obs.y, player.x - obs.x);
-                    let relAngle = (angle - obs.rotation) % (Math.PI * 2);
-                    if (relAngle < 0) relAngle += Math.PI * 2;
-                    const segIdx = Math.floor(relAngle / (Math.PI / 2)) % 4;
-                    if (COLORS[segIdx] !== player.color) {
-                        triggerGameOver();
-                        return;
-                    }
-                }
-
-                // Ring 2 (Inner Ring, radius 44, rotates clockwise)
-                // Note: Middle ring (radius 64) has no collision for addictive, fair gameplay
-                if (Math.abs(dist - 44) < (player.radius + halfThick - 1.5)) {
-                    const angle = Math.atan2(player.y - obs.y, player.x - obs.x);
-                    let relAngle = (angle - obs.rotation) % (Math.PI * 2);
-                    if (relAngle < 0) relAngle += Math.PI * 2;
-                    const segIdx = Math.floor(relAngle / (Math.PI / 2)) % 4;
-                    if (COLORS[segIdx] !== player.color) {
-                        triggerGameOver();
-                        return;
                     }
                 }
             }

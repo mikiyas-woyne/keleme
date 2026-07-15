@@ -918,7 +918,7 @@ function createGame(soundEffects, currentLevel, onGameOver, onVictory) {
     }
 
     function getInitialObstacleCount() {
-        return currentLevel ? 3 : 6;
+        return currentLevel ? (window.IS_MOBILE ? 2 : 3) : (window.IS_MOBILE ? 4 : 6);
     }
 
     // Neon Arc Colors Palette
@@ -1396,7 +1396,7 @@ function createGame(soundEffects, currentLevel, onGameOver, onVictory) {
         }
     }
 
-    const MAX_PARTICLES = window.IS_MOBILE ? 45 : 220;
+    const MAX_PARTICLES = window.LOW_FX ? 24 : (window.IS_MOBILE ? 45 : 220);
 
     function updateAndDrawParticles() {
         // Hard cap so a burst of explosions/trails can never pile up into a lag spike
@@ -1428,7 +1428,7 @@ function createGame(soundEffects, currentLevel, onGameOver, onVictory) {
 
 
     function generateNextObstacle() {
-        const spacing = currentLevel ? 420 : 340; // tighter gaps in free play
+        const spacing = currentLevel ? (window.IS_MOBILE ? 500 : 420) : (window.IS_MOBILE ? 500 : 340); // tighter gaps in free play
         const spawnY = highestYGenerated - spacing;
         highestYGenerated = spawnY;
 
@@ -2155,7 +2155,7 @@ function createGame(soundEffects, currentLevel, onGameOver, onVictory) {
                 }
             }
             else if (obs.type === 'cross') {
-                const halfThick = obs.thickness / 2;
+                const halfThick = Math.max(4, obs.thickness / 2 - 1);
                 // Check collision against each of the 4 spoke lines
                 for (let i = 0; i < 4; i++) {
                     const angle = obs.rotation + i * Math.PI / 2;
@@ -2184,8 +2184,8 @@ function createGame(soundEffects, currentLevel, onGameOver, onVictory) {
                 }
             }
             else if (obs.type === 'square') {
-                const halfThick = obs.thickness / 2;
-                const size = obs.radius * 1.3;
+                const halfThick = Math.max(4, obs.thickness / 2 - 1.5);
+                const size = obs.radius * 1.16;
 
                 // Check each of the 4 line segments of the square
                 for (let i = 0; i < 4; i++) {
@@ -2218,7 +2218,7 @@ function createGame(soundEffects, currentLevel, onGameOver, onVictory) {
                 }
             }
             else if (obs.type === 'broken_line') {
-                const halfThick = obs.thickness / 2;
+                const halfThick = Math.max(5, obs.thickness / 2 - 2);
                 // Since this is a horizontal bar, check collision if the player overlaps vertically
                 const distY = Math.abs(player.y - obs.y);
                 if (distY < player.radius + halfThick) {
